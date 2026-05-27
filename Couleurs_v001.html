@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apprendre les couleurs</title>
+<style>
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+
+  html { height: -webkit-fill-available; overflow: hidden; }
+
+  .container {
+    text-align: center;
+    max-width: 600px;
+    width: 96%;
+    padding: 0.5rem 0 1.2rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: #aab;
+  }
+
+  /* ── Triplet row ── */
+  .triplet {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Neighbour cards */
+  .neighbor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
+  .neighbor-card {
+    width: 90px;
+    height: 90px;
+    border-radius: 16px;
+    transition: background-color 0.6s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    border: 2px solid rgba(255,255,255,0.06);
+    margin-bottom: 0.4rem;
+  }
+
+  .neighbor-label {
+    font-size: 0.7rem;
+    color: #778;
+    min-height: 1rem;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-style: italic;
+    opacity: 0;
+  }
+
+  .neighbor-label.visible { opacity: 1; transition: opacity 0.3s; }
+  .neighbor-label.hidden  { opacity: 0; transition: none; }
+
+  /* Main card */
+  .main-color {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
+  .color-card {
+    width: 160px;
+    height: 160px;
+    border-radius: 24px;
+    margin-bottom: 0.9rem;
+    transition: background-color 0.6s ease;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    border: 3px solid rgba(255,255,255,0.08);
+  }
+
+  .color-name-fr {
+    font-size: 1.5rem;
+    font-weight: 600;
+    min-height: 2rem;
+    margin-bottom: 0.12rem;
+  }
+
+  .color-name-de {
+    font-size: 1rem;
+    font-weight: 400;
+    min-height: 1.3rem;
+    margin-bottom: 0.35rem;
+    color: #b0b8c8;
+    font-style: italic;
+  }
+
+  .color-hex {
+    font-size: 0.82rem;
+    color: #889;
+    min-height: 1.2rem;
+    margin-bottom: 0.9rem;
+    font-family: 'Courier New', monospace;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Overlay both button rows at the same position */
+  .buttons-wrapper {
+    position: relative;
+    margin-bottom: 0.5rem;
+    /* height will be determined by the tallest row */
+    min-height: 54px;
+  }
+  #revealRow, #actionButtons {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    justify-content: center;
+  }
+  #revealRow { visibility: visible; }
+  #revealRow.hidden-row { visibility: hidden; }
+  #actionButtons { visibility: hidden; }
+  #actionButtons.visible-row { visibility: visible; }
+
+  button {
+    padding: 15px 22px;
+    border: none;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    position: relative;
+    z-index: 100;
+  }
+
+  button:active:not(:disabled) {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+
+  button:disabled { cursor: default; opacity: 0.35; }
+
+  .btn-reveal {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    min-width: 200px;
+  }
+
+  .btn-known {
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    color: #1a1a2e;
+  }
+
+  /* +5 / +20 buttons */
+  .btn-plus5 {
+    background: rgba(255,255,255,0.08);
+    color: #ccc;
+    font-size: 0.8rem;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .btn-plus20 {
+    background: rgba(255,255,255,0.08);
+    color: #ccc;
+    font-size: 0.8rem;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .stats {
+    margin-top: 0.8rem;
+    font-size: 0.78rem;
+    color: #778;
+    line-height: 1.7;
+  }
+
+  .category {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.06);
+    color: #99a;
+  }
+
+  .done-screen {
+    display: none;
+    padding: 2rem 1rem;
+  }
+
+  .done-screen h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    font-weight: 300;
+  }
+
+  .done-screen p {
+    color: #99a;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .btn-restart {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    min-width: 220px;
+  }
+
+
+  /* ── Level selection screen ── */
+  .level-screen {
+    padding: 1rem 0.5rem 1.5rem;
+  }
+  .level-screen h2 {
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: #aab;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.05em;
+  }
+  .level-screen p {
+    font-size: 0.85rem;
+    color: #778;
+    margin-bottom: 1.6rem;
+    line-height: 1.5;
+  }
+  .level-cards {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .level-card {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 1.2rem 1rem;
+    width: 140px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    touch-action: manipulation;
+  }
+  .level-card:active { transform: scale(0.95); }
+  .level-card:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); }
+  .level-card .lvl-num {
+    font-size: 2rem;
+    margin-bottom: 0.3rem;
+  }
+  .level-card .lvl-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #dde;
+  }
+  .level-card .lvl-desc {
+    font-size: 0.72rem;
+    color: #778;
+    line-height: 1.4;
+  }
+  .level-1 { border-color: rgba(102,126,234,0.4); }
+  .level-1:hover { border-color: #667eea; }
+  .level-2 { border-color: rgba(240,180,50,0.4); }
+  .level-2:hover { border-color: #f0b432; }
+
+  @media (max-width: 400px) {
+    .color-card { width: 130px; height: 130px; }
+    .neighbor-card { width: 72px; height: 72px; }
+    .color-name-fr { font-size: 1.2rem; }
+    button { padding: 13px 16px; font-size: 0.88rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🎨 Devinez la couleur</h1>
+
+  <div id="levelScreen" class="level-screen">
+    <h2>🎨 Choisissez votre niveau</h2>
+    <p>Sélectionnez le niveau de difficulté pour commencer l'entraînement.</p>
+    <div class="level-cards">
+      <div class="level-card level-1" id="btn-level1">
+        <div class="lvl-num">⭐</div>
+        <div class="lvl-title">Niveau 1</div>
+        <div class="lvl-desc">150 couleurs classiques avec noms français & allemands</div>
+      </div>
+      <div class="level-card level-2" id="btn-level2">
+        <div class="lvl-num">⭐⭐</div>
+        <div class="lvl-title">Niveau 2</div>
+        <div class="lvl-desc">281 teintes avancées tirées de Wikipédia</div>
+      </div>
+    </div>
+  </div>
+
+    <div id="gameScreen" style="display:none;">
+
+    <!-- Triplet: voisin gauche · principale · voisin droit -->
+    <div class="triplet">
+      <div class="neighbor" id="leftNeighbor">
+        <div class="neighbor-card" id="leftCard"></div>
+        <div class="neighbor-label hidden" id="leftLabel"></div>
+      </div>
+
+      <div class="main-color">
+        <div class="color-card" id="colorCard"></div>
+        <div class="color-name-fr" id="colorNameFr">&nbsp;</div>
+        <div class="color-name-de" id="colorNameDe">&nbsp;</div>
+        <div class="color-hex" id="colorHex">&nbsp;</div>
+      </div>
+
+      <div class="neighbor" id="rightNeighbor">
+        <div class="neighbor-card" id="rightCard"></div>
+        <div class="neighbor-label hidden" id="rightLabel"></div>
+      </div>
+    </div>
+
+    <div class="buttons-wrapper">
+      <div class="buttons" id="revealRow">
+        <button class="btn-reveal" id="revealBtn">Révéler le nom</button>
+      </div>
+      <div class="buttons" id="actionButtons">
+        <button class="btn-known" id="knownBtn">✓ Connue</button>
+        <button class="btn-plus5" id="plus5Btn">↻ +5 tours</button>
+        <button class="btn-plus20" id="plus20Btn">↻ +20 tours</button>
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="done-screen" id="doneScreen">
+    <h2>🎉 Bravo !</h2>
+    <p id="doneText">Vous connaissez toutes les couleurs !</p>
+    <button class="btn-restart" id="restartBtn">Recommencer</button>
+    <button class="btn-restart" id="changeLevelBtn" style="margin-top:0.5rem;background:rgba(255,255,255,0.1);font-weight:400;font-size:0.9rem;">Changer de niveau</button>
+  </div>
+</div>
+
+<script>
+var level2Colors = [
+  {name:"Bisque",hex:"#FFE4C4",cat:"Rose"},
+  {name:"Carnation",hex:"#FEC3AC",cat:"Rose"},
+  {name:"Coquille d'œuf",hex:"#FDE9E0",cat:"Rose"},
+  {name:"Cuisse de nymphe",hex:"#FEE7F0",cat:"Rose"},
+  {name:"Framboise",hex:"#E25098",cat:"Rose"},
+  {name:"Incarnat",hex:"#FF6F7D",cat:"Rose"},
+  {name:"Magenta",hex:"#FD3F92",cat:"Rose"},
+  {name:"Rose Baker-Miller",hex:"#FF91AF",cat:"Rose"},
+  {name:"Rose bonbon",hex:"#F9429E",cat:"Rose"},
+  {name:"Rose dragée",hex:"#FEBFD2",cat:"Rose"},
+  {name:"Rose Mountbatten",hex:"#997A8D",cat:"Gris"},
+  {name:"Rose Pompadour",hex:"#ED7A9B",cat:"Rose"},
+  {name:"Rose shocking",hex:"#B51366",cat:"Rose"},
+  {name:"Saumon",hex:"#FF91A4",cat:"Rose"},
+  {name:"Alizarine",hex:"#D90115",cat:"Rouge"},
+  {name:"Amarante",hex:"#91283B",cat:"Rouge",syn:"Passe-velours"},
+  {name:"Rouge d'Andrinople",hex:"#A91101",cat:"Rouge",syn:"Turc"},
+  {name:"Anglais",hex:"#F7230C",cat:"Rouge",syn:"Mars"},
+  {name:"Bordeaux",hex:"#800000",cat:"Rouge"},
+  {name:"Brique",hex:"#842E1B",cat:"Brun"},
+  {name:"Capucine",hex:"#FF5E4D",cat:"Rouge"},
+  {name:"Cardinal",hex:"#B82010",cat:"Rouge"},
+  {name:"Carmin",hex:"#960018",cat:"Rouge"},
+  {name:"Cerise",hex:"#D20F45",cat:"Rouge",syn:"Rubis"},
+  {name:"Cinabre",hex:"#DB1702",cat:"Rouge"},
+  {name:"Coquelicot",hex:"#C60800",cat:"Rouge",syn:"Ponceau"},
+  {name:"Rouge Corail",hex:"#D93951",cat:"Rouge"},
+  {name:"Cramoisi",hex:"#DC143C",cat:"Rouge"},
+  {name:"Écarlate",hex:"#FF2400",cat:"Rouge"},
+  {name:"Falun",hex:"#801818",cat:"Rouge"},
+  {name:"Feu",hex:"#FE1B00",cat:"Rouge"},
+  {name:"Fraise",hex:"#BF3030",cat:"Rouge"},
+  {name:"Fraise écrasée",hex:"#A42424",cat:"Rouge"},
+  {name:"Framboise",hex:"#C72C48",cat:"Rouge"},
+  {name:"Garance",hex:"#EE1010",cat:"Rouge"},
+  {name:"Grenadine",hex:"#E9383F",cat:"Rouge"},
+  {name:"Grenat",hex:"#6E0B14",cat:"Rouge"},
+  {name:"Groseille",hex:"#CF0A1D",cat:"Rouge"},
+  {name:"Gueules",hex:"#E21313",cat:"Rouge"},
+  {name:"Magenta",hex:"#FF00FF",cat:"Rouge"},
+  {name:"Nacarat",hex:"#FC5D5D",cat:"Rouge"},
+  {name:"Pourpre",hex:"#9E0E40",cat:"Rouge"},
+  {name:"Rosso Corsa",hex:"#D40000",cat:"Rouge"},
+  {name:"Rouge",hex:"#FF0000",cat:"Rouge"},
+  {name:"Rouge-orange",hex:"#FF4500",cat:"Orange"},
+  {name:"Rouge tomate",hex:"#DE2916",cat:"Rouge"},
+  {name:"Rouille",hex:"#B7410E",cat:"Brun",syn:"Roux"},
+  {name:"Sang de bœuf",hex:"#730800",cat:"Rouge"},
+  {name:"Sanguine",hex:"#850606",cat:"Rouge"},
+  {name:"Tomette",hex:"#AE4A34",cat:"Brun",syn:"Rouge tommette"},
+  {name:"Vermeil",hex:"#FF0921",cat:"Rouge"},
+  {name:"Vermillon",hex:"#E34234",cat:"Rouge"},
+  {name:"Acier",hex:"#1A2B3C",cat:"Bleu"},
+  {name:"Aigue-marine",hex:"#79F8F8",cat:"Bleu"},
+  {name:"Azur",hex:"#007FFF",cat:"Bleu"},
+  {name:"Azuré",hex:"#F0FFFF",cat:"Blanc",syn:"Azur brume"},
+  {name:"Barbeau",hex:"#5472AE",cat:"Bleu",syn:"Bleuet"},
+  {name:"Bleu",hex:"#0000FF",cat:"Bleu"},
+  {name:"Bleu bébé",hex:"#C8DBE3",cat:"Bleu"},
+  {name:"Bleu-vert",hex:"#0098BF",cat:"Bleu"},
+  {name:"Bleu-violet",hex:"#4B0082",cat:"Bleu",syn:"Indigo"},
+  {name:"Bleu YInMn",hex:"#2E5090",cat:"Bleu"},
+  {name:"Cœruleum",hex:"#02A4D3",cat:"Bleu"},
+  {name:"Canard",hex:"#048B9A",cat:"Bleu"},
+  {name:"Céleste",hex:"#26C4EC",cat:"Bleu"},
+  {name:"Charrette",hex:"#8EA2C6",cat:"Bleu"},
+  {name:"Ciel",hex:"#007CB0",cat:"Bleu"},
+  {name:"Cobalt",hex:"#22427C",cat:"Bleu"},
+  {name:"Cyan",hex:"#00FFFF",cat:"Bleu"},
+  {name:"Denim",hex:"#1560BD",cat:"Bleu"},
+  {name:"Dragée",hex:"#DFF2FF",cat:"Bleu"},
+  {name:"Égyptien",hex:"#1034A6",cat:"Bleu"},
+  {name:"Électrique",hex:"#2C75FF",cat:"Bleu"},
+  {name:"France",hex:"#318CE7",cat:"Bleu"},
+  {name:"Fumée",hex:"#BBD2E1",cat:"Bleu"},
+  {name:"Givré",hex:"#80D0D0",cat:"Bleu"},
+  {name:"Gris de lin",hex:"#D2CAEC",cat:"Bleu"},
+  {name:"Horizon",hex:"#7F8FA6",cat:"Bleu"},
+  {name:"Indigo",hex:"#23446B",cat:"Bleu"},
+  {name:"Lavande",hex:"#9683EC",cat:"Bleu"},
+  {name:"Majorelle",hex:"#6050DC",cat:"Bleu"},
+  {name:"Marine",hex:"#000080",cat:"Bleu"},
+  {name:"Minuit",hex:"#003366",cat:"Bleu"},
+  {name:"Nuit",hex:"#0F056B",cat:"Bleu"},
+  {name:"Outremer",hex:"#1B019B",cat:"Bleu"},
+  {name:"Paon",hex:"#067790",cat:"Bleu"},
+  {name:"Pastel",hex:"#56739A",cat:"Bleu"},
+  {name:"Persan",hex:"#458E9D",cat:"Bleu"},
+  {name:"Pervenche",hex:"#C3CDE6",cat:"Bleu"},
+  {name:"Pétrole",hex:"#006374",cat:"Bleu"},
+  {name:"Prusse",hex:"#24445C",cat:"Bleu"},
+  {name:"Roi",hex:"#002366",cat:"Bleu"},
+  {name:"Safre",hex:"#0131B4",cat:"Bleu"},
+  {name:"Saphir",hex:"#0F52BA",cat:"Bleu"},
+  {name:"Sarcelle",hex:"#008080",cat:"Bleu"},
+  {name:"Savoie",hex:"#4B61D1",cat:"Bleu"},
+  {name:"Smalt",hex:"#003399",cat:"Bleu"},
+  {name:"Tiffany",hex:"#0ABAB5",cat:"Bleu"},
+  {name:"Turquin",hex:"#425B8A",cat:"Bleu"},
+  {name:"Turquoise",hex:"#40E0D0",cat:"Bleu"},
+  {name:"Ambre",hex:"#F0C300",cat:"Jaune"},
+  {name:"Auréolin",hex:"#EFD242",cat:"Jaune"},
+  {name:"Aurore",hex:"#FFCB60",cat:"Jaune"},
+  {name:"Beurre",hex:"#F0E36B",cat:"Jaune"},
+  {name:"Blé",hex:"#E8D630",cat:"Jaune"},
+  {name:"Bouton d'or",hex:"#F6DC12",cat:"Jaune"},
+  {name:"Caca d'oie",hex:"#CDCD0D",cat:"Jaune"},
+  {name:"Canari",hex:"#E7F00D",cat:"Jaune"},
+  {name:"Chamois",hex:"#D0C07A",cat:"Jaune"},
+  {name:"Chartreuse",hex:"#DFFF00",cat:"Jaune"},
+  {name:"Chrome",hex:"#FFFF05",cat:"Jaune"},
+  {name:"Gomme-gutte",hex:"#EF9B0F",cat:"Jaune"},
+  {name:"Jaune citron",hex:"#F7FF3C",cat:"Jaune"},
+  {name:"Jaune de cobalt",hex:"#FDEE00",cat:"Jaune"},
+  {name:"Jaune de Mars",hex:"#EED153",cat:"Jaune"},
+  {name:"Jaune de Naples",hex:"#FADA5E",cat:"Jaune"},
+  {name:"Jaune impérial",hex:"#FFE436",cat:"Jaune"},
+  {name:"Jaune indien",hex:"#E89845",cat:"Jaune"},
+  {name:"Jaune-orange",hex:"#FFA300",cat:"Jaune"},
+  {name:"Kaki",hex:"#F0E68C",cat:"Jaune"},
+  {name:"Maïs",hex:"#E29000",cat:"Jaune"},
+  {name:"Mastic",hex:"#B3B191",cat:"Gris"},
+  {name:"Miel",hex:"#CB8E00",cat:"Jaune"},
+  {name:"Mimosa",hex:"#FEF86C",cat:"Jaune"},
+  {name:"Moutarde",hex:"#FFDB58",cat:"Jaune"},
+  {name:"Nankin",hex:"#F7E269",cat:"Jaune"},
+  {name:"Ocre jaune",hex:"#DFAF2C",cat:"Jaune"},
+  {name:"Or",hex:"#FFD700",cat:"Jaune"},
+  {name:"Orpiment",hex:"#FCD21C",cat:"Jaune"},
+  {name:"Paille",hex:"#FEE347",cat:"Jaune"},
+  {name:"Poil de chameau",hex:"#B67823",cat:"Jaune"},
+  {name:"Poussin",hex:"#F7E35F",cat:"Jaune"},
+  {name:"Sable",hex:"#E0CDA9",cat:"Jaune"},
+  {name:"Safran",hex:"#F4C430",cat:"Jaune"},
+  {name:"Soufre",hex:"#FFFF6B",cat:"Jaune"},
+  {name:"Topaze",hex:"#FAEA73",cat:"Jaune"},
+  {name:"Vert-jaune",hex:"#C8FF00",cat:"Jaune"},
+  {name:"Aile de corbeau",hex:"#000000",cat:"Noir",syn:"Charbon | Jais | Noir | Noir animal | Noir d'encre | Noir d'ivoire | Noir de jais | Sable | Ébène"},
+  {name:"Aubergine",hex:"#370028",cat:"Noir"},
+  {name:"Bistre",hex:"#3D2B1F",cat:"Brun"},
+  {name:"Brou de noix",hex:"#3F2204",cat:"Brun"},
+  {name:"Café",hex:"#462E01",cat:"Brun"},
+  {name:"Cassis",hex:"#2C030B",cat:"Noir"},
+  {name:"Dorian",hex:"#0B1616",cat:"Noir"},
+  {name:"Noiraud",hex:"#2F1E0E",cat:"Noir"},
+  {name:"Noir d'aniline",hex:"#120D16",cat:"Noir"},
+  {name:"Noir de carbone",hex:"#130E0A",cat:"Noir"},
+  {name:"Réglisse",hex:"#2D241E",cat:"Noir"},
+  {name:"Abricot",hex:"#E67E30",cat:"Orange"},
+  {name:"Carotte",hex:"#F4661B",cat:"Orange"},
+  {name:"Citrouille",hex:"#DF6D14",cat:"Brun"},
+  {name:"Corail",hex:"#E73E01",cat:"Orange"},
+  {name:"Cuivre",hex:"#B36700",cat:"Orange"},
+  {name:"Jaune-orange",hex:"#FFDF00",cat:"Orange"},
+  {name:"Mandarine",hex:"#FEA347",cat:"Orange"},
+  {name:"Melon",hex:"#DE9816",cat:"Orange"},
+  {name:"Orange",hex:"#FF6600",cat:"Orange"},
+  {name:"Orange brûlé",hex:"#CC5500",cat:"Orange"},
+  {name:"Orangé de chrome",hex:"#E73501",cat:"Orange"},
+  {name:"Saumon",hex:"#F88E55",cat:"Orange"},
+  {name:"Tangerine",hex:"#FF7F00",cat:"Orange"},
+  {name:"Absinthe",hex:"#7FDD4C",cat:"Vert"},
+  {name:"Amande",hex:"#82C46C",cat:"Vert"},
+  {name:"Anglais",hex:"#34A040",cat:"Vert"},
+  {name:"Anis",hex:"#9FE855",cat:"Vert"},
+  {name:"Asperge",hex:"#7BA05B",cat:"Vert"},
+  {name:"Avocat",hex:"#568203",cat:"Vert"},
+  {name:"Bleu-vert",hex:"#009CAB",cat:"Vert"},
+  {name:"Bouteille",hex:"#1B5716",cat:"Vert"},
+  {name:"Céladon",hex:"#90B7AF",cat:"Vert"},
+  {name:"Chartreuse",hex:"#C2F732",cat:"Vert"},
+  {name:"Chrome",hex:"#18391E",cat:"Vert"},
+  {name:"Citron",hex:"#00FF00",cat:"Vert"},
+  {name:"Eau",hex:"#B0F2B6",cat:"Vert"},
+  {name:"Émeraude",hex:"#439876",cat:"Vert"},
+  {name:"Épinard",hex:"#175732",cat:"Vert"},
+  {name:"Glauque",hex:"#90B078",cat:"Vert"},
+  {name:"Hooker",hex:"#00A63D",cat:"Vert"},
+  {name:"Impérial",hex:"#00561B",cat:"Vert"},
+  {name:"Jade",hex:"#87E990",cat:"Vert"},
+  {name:"Kaki",hex:"#596643",cat:"Vert"},
+  {name:"Lichen",hex:"#85C17E",cat:"Vert"},
+  {name:"Lime",hex:"#9EFD38",cat:"Vert"},
+  {name:"Malachite",hex:"#126D64",cat:"Vert"},
+  {name:"Menthe",hex:"#9BE9C2",cat:"Vert"},
+  {name:"Mousse",hex:"#679F5A",cat:"Vert"},
+  {name:"Olive",hex:"#868349",cat:"Vert"},
+  {name:"Perroquet",hex:"#3AF24B",cat:"Vert"},
+  {name:"Pistache",hex:"#BEF574",cat:"Vert"},
+  {name:"Poireau",hex:"#4CA66B",cat:"Vert",syn:"Prasin"},
+  {name:"Pomme",hex:"#34C924",cat:"Vert"},
+  {name:"Prairie",hex:"#57D53B",cat:"Vert"},
+  {name:"Printemps",hex:"#00FF7F",cat:"Vert"},
+  {name:"Sapin",hex:"#095228",cat:"Vert"},
+  {name:"Sarcelle",hex:"#006D5B",cat:"Vert"},
+  {name:"Sauge",hex:"#689D71",cat:"Vert"},
+  {name:"Tilleul",hex:"#A5D152",cat:"Vert"},
+  {name:"Véronèse",hex:"#00A25D",cat:"Vert"},
+  {name:"Vert",hex:"#00894D",cat:"Vert"},
+  {name:"Vert-de-gris",hex:"#27A1A4",cat:"Vert"},
+  {name:"Vessie",hex:"#22780F",cat:"Vert"},
+  {name:"Viride",hex:"#40826D",cat:"Vert"},
+  {name:"Améthyste",hex:"#9966CC",cat:"Violet"},
+  {name:"Aubergine",hex:"#614051",cat:"Violet"},
+  {name:"Bleu-violet",hex:"#8A2BE2",cat:"Violet"},
+  {name:"Glycine",hex:"#C9A0DC",cat:"Violet"},
+  {name:"Héliotrope",hex:"#DF73FF",cat:"Violet"},
+  {name:"Lavande",hex:"#B57EDC",cat:"Violet"},
+  {name:"Lilas",hex:"#C8A2C8",cat:"Violet"},
+  {name:"Mauve",hex:"#E0B0FF",cat:"Violet"},
+  {name:"Orchidée",hex:"#DA70D6",cat:"Violet"},
+  {name:"Parme",hex:"#CFA0E9",cat:"Violet"},
+  {name:"Pourpre",hex:"#6A0DAD",cat:"Violet"},
+  {name:"Prune",hex:"#8E4585",cat:"Violet"},
+  {name:"Violet",hex:"#8000FF",cat:"Violet"},
+  {name:"Violet d'évêque",hex:"#723E64",cat:"Violet"},
+  {name:"Violet minéral",hex:"#8A55A3",cat:"Violet"},
+  {name:"Violine",hex:"#580688",cat:"Violet"},
+  {name:"Zinzolin",hex:"#6C0277",cat:"Violet"},
+  {name:"Albâtre",hex:"#FEFEFE",cat:"Blanc",syn:"Argent | Blanc de Saturne | Blanc de plomb | Céruse | Neige"},
+  {name:"Argile",hex:"#EFEFEF",cat:"Blanc"},
+  {name:"Beige clair",hex:"#F5F5DC",cat:"Blanc"},
+  {name:"Blanc",hex:"#FFFFFF",cat:"Blanc"},
+  {name:"Blanc cassé",hex:"#FEFEE2",cat:"Blanc"},
+  {name:"Crème",hex:"#FFFDD0",cat:"Blanc"},
+  {name:"Blanc d'Espagne",hex:"#FEFDF0",cat:"Blanc",syn:"Blanc de Meudon | Blanc de Troyes"},
+  {name:"Ivoire",hex:"#FFFFF0",cat:"Blanc"},
+  {name:"Blanc de lait",hex:"#FBFCFA",cat:"Blanc"},
+  {name:"Lin",hex:"#FAF0E6",cat:"Blanc"},
+  {name:"Lunaire",hex:"#F4FEFE",cat:"Blanc"},
+  {name:"Blanc de zinc",hex:"#F6FEFE",cat:"Blanc"},
+  {name:"Acajou",hex:"#88421D",cat:"Brun"},
+  {name:"Alezan",hex:"#A76726",cat:"Brun"},
+  {name:"Auburn",hex:"#9D3E0C",cat:"Brun"},
+  {name:"Ambre",hex:"#AD390E",cat:"Brun"},
+  {name:"Basané",hex:"#8B6C42",cat:"Brun",syn:"Châtain"},
+  {name:"Beige",hex:"#C8AD7F",cat:"Brun"},
+  {name:"Bismarck",hex:"#4D2009",cat:"Brun"},
+  {name:"Bitume",hex:"#4E3D28",cat:"Brun"},
+  {name:"Bronze",hex:"#614E1A",cat:"Brun"},
+  {name:"Bureau",hex:"#6B5731",cat:"Brun"},
+  {name:"Cacao",hex:"#614B3A",cat:"Brun"},
+  {name:"Cachou",hex:"#2F1B0C",cat:"Brun"},
+  {name:"Café au lait",hex:"#785E2F",cat:"Brun"},
+  {name:"Cannelle",hex:"#7E5835",cat:"Brun"},
+  {name:"Caramel",hex:"#7E3300",cat:"Brun"},
+  {name:"Châtaigne",hex:"#806D5A",cat:"Brun"},
+  {name:"Chaudron",hex:"#85530F",cat:"Brun"},
+  {name:"Chocolat",hex:"#5A3A22",cat:"Brun"},
+  {name:"Fauve",hex:"#AD4F09",cat:"Brun"},
+  {name:"Feuille-morte",hex:"#99512B",cat:"Brun"},
+  {name:"Grège",hex:"#BBAE98",cat:"Brun"},
+  {name:"Lavallière",hex:"#8F5922",cat:"Brun"},
+  {name:"Marron",hex:"#582900",cat:"Brun"},
+  {name:"Noisette",hex:"#955628",cat:"Brun"},
+  {name:"Ocre",hex:"#DD985C",cat:"Brun"},
+  {name:"Puce",hex:"#4E1609",cat:"Brun"},
+  {name:"Sépia",hex:"#702C14",cat:"Brun"},
+  {name:"Tabac",hex:"#9F551E",cat:"Brun"},
+  {name:"Terracotta",hex:"#8C5230",cat:"Brun"},
+  {name:"Terre d'ombre",hex:"#684C2D",cat:"Brun"},
+  {name:"Terre de Sienne",hex:"#8E5434",cat:"Brun"},
+  {name:"Anthracite",hex:"#2B292E",cat:"Gris"},
+  {name:"Ardoise",hex:"#5A5E6B",cat:"Gris"},
+  {name:"Argent",hex:"#C0C0C0",cat:"Gris"},
+  {name:"Bis",hex:"#766F64",cat:"Gris"},
+  {name:"Bistre (var.)",hex:"#856D4D",cat:"Gris"},
+  {name:"Bleu ardoise",hex:"#686F8C",cat:"Gris"},
+  {name:"Céladon",hex:"#83A697",cat:"Gris"},
+  {name:"Étain",hex:"#EDEDED",cat:"Gris"},
+  {name:"Gris",hex:"#808080",cat:"Gris"},
+  {name:"Gris acier",hex:"#AFAFAF",cat:"Gris"},
+  {name:"Gris de Payne",hex:"#677179",cat:"Gris"},
+  {name:"Gris fer",hex:"#7F7F7F",cat:"Gris"},
+  {name:"Gris perle",hex:"#D2D0CE",cat:"Gris"},
+  {name:"Lin",hex:"#939681",cat:"Gris"},
+  {name:"Plomb",hex:"#798081",cat:"Gris"},
+  {name:"Souris",hex:"#9E9E9E",cat:"Gris"},
+  {name:"Taupe",hex:"#463F32",cat:"Gris"},
+  {name:"Tourterelle",hex:"#BBACAC",cat:"Gris"},
+  {name:"Vert de gris",hex:"#95A595",cat:"Gris"}
+];
+
+var allColors = [
+  {name:"Amarante",de:"Amarantrot",hex:"#91283B",cat:"Rouge"},
+  {name:"Bordeaux",de:"Bordeauxrot",hex:"#6D071A",cat:"Rouge"},
+  {name:"Carmin",de:"Karminrot",hex:"#960018",cat:"Rouge"},
+  {name:"Cramoisi",de:"Karmesinrot",hex:"#DC143C",cat:"Rouge"},
+  {name:"Écarlate",de:"Scharlachrot",hex:"#ED0000",cat:"Rouge"},
+  {name:"Grenat",de:"Granatrot",hex:"#6E0B14",cat:"Rouge"},
+  {name:"Vermillon",de:"Zinnoberrot",hex:"#DB1702",cat:"Rouge"},
+  {name:"Pourpre",de:"Purpurrot",hex:"#9E0E40",cat:"Rouge"},
+  {name:"Rubis",de:"Rubinrot",hex:"#E0115F",cat:"Rouge"},
+  {name:"Sang de bœuf",de:"Ochsenblutrot",hex:"#730800",cat:"Rouge"},
+  {name:"Terracotta",de:"Terrakotta",hex:"#CC4E3E",cat:"Rouge"},
+  {name:"Garance",de:"Krapprot",hex:"#EE1010",cat:"Rouge"},
+  {name:"Ponceau",de:"Klatschmohnrot",hex:"#C60B1E",cat:"Rouge"},
+  {name:"Nacarat",de:"Orangerot",hex:"#FC5D5D",cat:"Rouge"},
+  {name:"Coquelicot",de:"Mohnrot",hex:"#C60800",cat:"Rouge"},
+  {name:"Incarnat",de:"Fleischfarben",hex:"#FF6F7D",cat:"Rose"},
+  {name:"Magenta",de:"Magenta",hex:"#FF00FF",cat:"Rose"},
+  {name:"Fuchsia",de:"Fuchsia",hex:"#FD3F92",cat:"Rose"},
+  {name:"Puce",de:"Flohbraun",hex:"#4E1609",cat:"Brun"},
+  {name:"Saumon",de:"Lachsfarben",hex:"#F88E55",cat:"Rose"},
+  {name:"Rose bonbon",de:"Bonbonrosa",hex:"#F9429E",cat:"Rose"},
+  {name:"Rose poudré",de:"Puderrosa",hex:"#E8B4B8",cat:"Rose"},
+  {name:"Framboise",de:"Himbeerrot",hex:"#C72C48",cat:"Rose"},
+  {name:"Vieux rose",de:"Altrosa",hex:"#C08081",cat:"Rose"},
+  {name:"Chair",de:"Hautfarben",hex:"#F0C8A8",cat:"Rose"},
+  {name:"Bougainvillier",de:"Bougainvillea",hex:"#F0A0C0",cat:"Rose"},
+  {name:"Corail",de:"Korallenrot",hex:"#E73E01",cat:"Orange"},
+  {name:"Abricot",de:"Apricot",hex:"#E67E30",cat:"Orange"},
+  {name:"Cuivre",de:"Kupferfarben",hex:"#B36700",cat:"Orange"},
+  {name:"Roux",de:"Fuchsrot",hex:"#AD4F09",cat:"Orange"},
+  {name:"Mandarine",de:"Mandarinorange",hex:"#FEA347",cat:"Orange"},
+  {name:"Tangerine",de:"Tangerine",hex:"#FF9966",cat:"Orange"},
+  {name:"Citrouille",de:"Kürbisfarben",hex:"#DF6D14",cat:"Orange"},
+  {name:"Rouille",de:"Rostbraun",hex:"#985717",cat:"Orange"},
+  {name:"Safran",de:"Safrangelb",hex:"#FFA400",cat:"Orange"},
+  {name:"Brun",de:"Braun",hex:"#A0522D",cat:"Orange"},
+  {name:"Ambre",de:"Bernstein",hex:"#FFBF00",cat:"Jaune"},
+  {name:"Canari",de:"Kanariengelb",hex:"#FFEF00",cat:"Jaune"},
+  {name:"Citron",de:"Zitronengelb",hex:"#FFF44F",cat:"Jaune"},
+  {name:"Doré",de:"Goldfarben",hex:"#FFD700",cat:"Jaune"},
+  {name:"Miel",de:"Honiggelb",hex:"#FFC30B",cat:"Jaune"},
+  {name:"Paille",de:"Strohgelb",hex:"#E4D96F",cat:"Jaune"},
+  {name:"Soufre",de:"Schwefelgelb",hex:"#FFFF14",cat:"Jaune"},
+  {name:"Topaze",de:"Topasgelb",hex:"#FFC87C",cat:"Jaune"},
+  {name:"Ocre",de:"Ocker",hex:"#CC7722",cat:"Jaune"},
+  {name:"Chamois",de:"Chamoisfarben",hex:"#F0DC82",cat:"Jaune"},
+  {name:"Chartreuse",de:"Chartreuse",hex:"#7FFF00",cat:"Vert"},
+  {name:"Émeraude",de:"Smaragdgrün",hex:"#50C878",cat:"Vert"},
+  {name:"Jade",de:"Jadegrün",hex:"#00A36C",cat:"Vert"},
+  {name:"Kaki",de:"Khaki",hex:"#4A5D23",cat:"Vert"},
+  {name:"Menthe",de:"Mintgrün",hex:"#AAF0D1",cat:"Vert"},
+  {name:"Mousse",de:"Moosgrün",hex:"#8A9A5B",cat:"Vert"},
+  {name:"Olive",de:"Olivgrün",hex:"#808000",cat:"Vert"},
+  {name:"Pistache",de:"Pistaziengrün",hex:"#93C572",cat:"Vert"},
+  {name:"Sauge",de:"Salbeigrün",hex:"#77815C",cat:"Vert"},
+  {name:"Tilleul",de:"Lindengrün",hex:"#B8CA5D",cat:"Vert"},
+  {name:"Vert bouteille",de:"Flaschengrün",hex:"#006A4E",cat:"Vert"},
+  {name:"Vert forêt",de:"Waldgrün",hex:"#228B22",cat:"Vert"},
+  {name:"Vert pomme",de:"Apfelgrün",hex:"#8DB600",cat:"Vert"},
+  {name:"Céladon",de:"Seladongrün",hex:"#ACE1AF",cat:"Vert"},
+  {name:"Absinthe",de:"Absinthgrün",hex:"#7BA05B",cat:"Vert"},
+  {name:"Vert d'eau",de:"Wassergrün",hex:"#A2DDD4",cat:"Vert"},
+  {name:"Azur",de:"Azurblau",hex:"#007FFF",cat:"Bleu"},
+  {name:"Ciel",de:"Himmelblau",hex:"#87CEEB",cat:"Bleu"},
+  {name:"Cobalt",de:"Kobaltblau",hex:"#0047AB",cat:"Bleu"},
+  {name:"Indigo",de:"Indigo",hex:"#4B0082",cat:"Bleu"},
+  {name:"Klein",de:"Yves-Klein-Blau",hex:"#002FA7",cat:"Bleu"},
+  {name:"Lapis-lazuli",de:"Lapislazuli",hex:"#26619C",cat:"Bleu"},
+  {name:"Marine",de:"Marineblau",hex:"#03224C",cat:"Bleu"},
+  {name:"Outremer",de:"Ultramarinblau",hex:"#1B019B",cat:"Bleu"},
+  {name:"Pervenche",de:"Immergrünblau",hex:"#CCCCFF",cat:"Bleu"},
+  {name:"Pétrole",de:"Petrol",hex:"#1D4851",cat:"Bleu"},
+  {name:"Saphir",de:"Saphirblau",hex:"#0131B4",cat:"Bleu"},
+  {name:"Turquoise",de:"Türkis",hex:"#25FDE9",cat:"Bleu"},
+  {name:"Bleu canard",de:"Entenblau",hex:"#048B9A",cat:"Bleu"},
+  {name:"Bleu roi",de:"Königsblau",hex:"#318CE7",cat:"Bleu"},
+  {name:"Bleu nuit",de:"Nachtblau",hex:"#0F056B",cat:"Bleu"},
+  {name:"Bleu acier",de:"Stahlblau",hex:"#3A8EBA",cat:"Bleu"},
+  {name:"Bleu givré",de:"Eisblau",hex:"#80D0D0",cat:"Bleu"},
+  {name:"Bleu ciel",de:"Himmelblau",hex:"#77B5FE",cat:"Bleu"},
+  {name:"Bleu électrique",de:"Elektrischblau",hex:"#2C75FF",cat:"Bleu"},
+  {name:"Bleuet",de:"Kornblumenblau",hex:"#5472AE",cat:"Bleu"},
+  {name:"Aigue-marine",de:"Aquamarin",hex:"#79F8F8",cat:"Bleu"},
+  {name:"Bleu paon",de:"Pfauenblau",hex:"#067790",cat:"Bleu"},
+  {name:"Bleu Prusse",de:"Preußischblau",hex:"#003153",cat:"Bleu"},
+  {name:"Améthyste",de:"Amethyst",hex:"#884DA7",cat:"Violet"},
+  {name:"Aubergine",de:"Aubergine",hex:"#370028",cat:"Violet"},
+  {name:"Lilas",de:"Flieder",hex:"#B666D2",cat:"Violet"},
+  {name:"Mauve",de:"Malve",hex:"#D473D4",cat:"Violet"},
+  {name:"Parme",de:"Veilchenblau",hex:"#CFA0E9",cat:"Violet"},
+  {name:"Prune",de:"Pflaumenblau",hex:"#811453",cat:"Violet"},
+  {name:"Violine",de:"Violett",hex:"#7B4F8B",cat:"Violet"},
+  {name:"Lavande",de:"Lavendel",hex:"#9683EC",cat:"Violet"},
+  {name:"Glycine",de:"Glyzinie",hex:"#C9A0DC",cat:"Violet"},
+  {name:"Orchidée",de:"Orchidee",hex:"#DA70D6",cat:"Violet"},
+  {name:"Byzantin",de:"Byzantinisch",hex:"#BD33A4",cat:"Violet"},
+  {name:"Héliotrope",de:"Heliotrop",hex:"#DF73FF",cat:"Violet"},
+  {name:"Acajou",de:"Mahagoni",hex:"#88421D",cat:"Brun"},
+  {name:"Bistre",de:"Bister",hex:"#856D4D",cat:"Brun"},
+  {name:"Cannelle",de:"Zimtbraun",hex:"#7E5835",cat:"Brun"},
+  {name:"Châtain",de:"Kastanienbraun",hex:"#8B6C42",cat:"Brun"},
+  {name:"Sépia",de:"Sepia",hex:"#AE8964",cat:"Brun"},
+  {name:"Sienna",de:"Siena",hex:"#A0522D",cat:"Brun"},
+  {name:"Terre de Sienne",de:"Gebrannte Siena",hex:"#C2452D",cat:"Brun"},
+  {name:"Fauve",de:"Rehbraun",hex:"#AD6F33",cat:"Brun"},
+  {name:"Havane",de:"Havanna",hex:"#8B7D6B",cat:"Brun"},
+  {name:"Taupe",de:"Taupe",hex:"#463F32",cat:"Brun"},
+  {name:"Chocolat",de:"Schokoladenbraun",hex:"#5A3A22",cat:"Brun"},
+  {name:"Noisette",de:"Haselnussbraun",hex:"#955628",cat:"Brun"},
+  {name:"Tabac",de:"Tabakbraun",hex:"#9F551E",cat:"Brun"},
+  {name:"Caramel",de:"Karamellbraun",hex:"#7E3817",cat:"Brun"},
+  {name:"Terre d'ombre",de:"Umbra",hex:"#926D27",cat:"Brun"},
+  {name:"Brique",de:"Ziegelrot",hex:"#842E1B",cat:"Brun"},
+  {name:"Café",de:"Kaffeebraun",hex:"#462E01",cat:"Brun"},
+  {name:"Marron glacé",de:"Maronenbraun",hex:"#7B6152",cat:"Brun"},
+  {name:"Alezan",de:"Fuchsbraun",hex:"#A76726",cat:"Brun"},
+  {name:"Beige",de:"Beige",hex:"#C8AD7F",cat:"Beige"},
+  {name:"Crème",de:"Cremefarben",hex:"#FEFEE2",cat:"Beige"},
+  {name:"Écru",de:"Naturweiß",hex:"#FEFEE0",cat:"Beige"},
+  {name:"Ivoire",de:"Elfenbein",hex:"#FFFFF0",cat:"Beige"},
+  {name:"Lin",de:"Leinenfarben",hex:"#FAF0E6",cat:"Beige"},
+  {name:"Nacre",de:"Perlmutt",hex:"#EFDFCC",cat:"Beige"},
+  {name:"Sable",de:"Sandfarben",hex:"#E0CDA9",cat:"Beige"},
+  {name:"Vanille",de:"Vanille",hex:"#E1CE9A",cat:"Beige"},
+  {name:"Parchemin",de:"Pergament",hex:"#ECE5B6",cat:"Beige"},
+  {name:"Champagne",de:"Champagnerfarben",hex:"#F7E7CE",cat:"Beige"},
+  {name:"Anthracite",de:"Anthrazit",hex:"#303030",cat:"Gris"},
+  {name:"Ardoise",de:"Schiefergrau",hex:"#5A5E6B",cat:"Gris"},
+  {name:"Cendre",de:"Aschgrau",hex:"#BBBBBB",cat:"Gris"},
+  {name:"Étain",de:"Zinnfarben",hex:"#8F8F8F",cat:"Gris"},
+  {name:"Fumée",de:"Rauchgrau",hex:"#BBD2E1",cat:"Gris"},
+  {name:"Grège",de:"Greige",hex:"#BBAE98",cat:"Gris"},
+  {name:"Plomb",de:"Bleigrau",hex:"#798081",cat:"Gris"},
+  {name:"Argent",de:"Silbergrau",hex:"#C0C0C0",cat:"Gris"},
+  {name:"Acier",de:"Stahlgrau",hex:"#848789",cat:"Gris"},
+  {name:"Souris",de:"Mausgrau",hex:"#9E9E9E",cat:"Gris"},
+  {name:"Perle",de:"Perlgrau",hex:"#CECECE",cat:"Gris"},
+  {name:"Tourterelle",de:"Turteltaubengrau",hex:"#BBACAC",cat:"Gris"},
+  {name:"Ébène",de:"Ebenholz",hex:"#17120E",cat:"Noir"},
+  {name:"Jais",de:"Pechschwarz",hex:"#0A0A0A",cat:"Noir"},
+  {name:"Réglisse",de:"Lakritzschwarz",hex:"#2D241E",cat:"Noir"},
+  {name:"Blanc cassé",de:"Gebrochenes Weiß",hex:"#FEFEE2",cat:"Blanc"},
+  {name:"Albâtre",de:"Alabasterweiß",hex:"#F2F0E6",cat:"Blanc"},
+  {name:"Neige",de:"Schneeweiß",hex:"#FFFAFA",cat:"Blanc"}
+];
+
+var level1Colors = allColors.slice();
+var available = allColors.slice();
+var reviewQueue = [];
+var known = [];
+var turn = 0;
+var current = null;
+var currentIdx = -1; // index of current in allColors
+var revealed = false;
+
+function pickNext() {
+  var i, pick, idx;
+  var due = [];
+  for (i = 0; i < reviewQueue.length; i++) {
+    if (reviewQueue[i].showAtTurn <= turn) due.push(reviewQueue[i]);
+  }
+  if (due.length > 0) {
+    pick = due[Math.floor(Math.random() * due.length)];
+    var nq = [];
+    for (i = 0; i < reviewQueue.length; i++) {
+      if (reviewQueue[i] !== pick) nq.push(reviewQueue[i]);
+    }
+    reviewQueue = nq;
+    return pick;
+  }
+  if (available.length > 0) {
+    idx = Math.floor(Math.random() * available.length);
+    // return an object with color + its index in allColors
+    return { color: available[idx], idx: allColors.indexOf(available[idx]) };
+  }
+  if (reviewQueue.length > 0) {
+    reviewQueue.sort(function(a, b) { return a.showAtTurn - b.showAtTurn; });
+    pick = reviewQueue[0];
+    reviewQueue = reviewQueue.slice(1);
+    return pick;
+  }
+  return null;
+}
+
+function showColor() {
+  var picked = pickNext();
+  if (!picked) {
+    document.getElementById('gameScreen').style.display = 'none';
+    document.getElementById('doneScreen').style.display = 'block';
+    return;
+  }
+  current = picked.color;
+  currentIdx = (picked.idx !== undefined) ? picked.idx : allColors.indexOf(current);
+
+  revealed = false;
+
+  // Main card
+  document.getElementById('colorCard').style.backgroundColor = current.hex;
+  document.getElementById('colorNameFr').innerHTML = '\u00A0';
+  document.getElementById('colorNameDe').innerHTML = '\u00A0';
+  document.getElementById('colorHex').innerHTML = '\u00A0';
+
+  // Neighbour cards — hide labels instantly (no transition) before updating text
+  var leftLabel = document.getElementById('leftLabel');
+  var rightLabel = document.getElementById('rightLabel');
+  leftLabel.classList.remove('visible');
+  leftLabel.classList.add('hidden');
+  rightLabel.classList.remove('visible');
+  rightLabel.classList.add('hidden');
+
+  var leftIdx = (currentIdx - 1 + allColors.length) % allColors.length;
+  var rightIdx = (currentIdx + 1) % allColors.length;
+  var leftColor = allColors[leftIdx];
+  var rightColor = allColors[rightIdx];
+
+  document.getElementById('leftCard').style.backgroundColor = leftColor.hex;
+  document.getElementById('rightCard').style.backgroundColor = rightColor.hex;
+  leftLabel.textContent = leftColor.name;
+  rightLabel.textContent = rightColor.name;
+
+  document.getElementById('revealBtn').disabled = false;
+  document.getElementById('revealRow').classList.remove('hidden-row');
+  document.getElementById('actionButtons').classList.remove('visible-row');
+  updateStats();
+}
+
+function doReveal() {
+  if (!current || revealed) return;
+  revealed = true;
+  turn++;
+  document.getElementById('colorNameFr').textContent = '\uD83C\uDDEB\uD83C\uDDF7 ' + current.name;
+  // Level 1 has German names; level 2 has synonyms instead
+  if (current.de) {
+    document.getElementById('colorNameDe').textContent = '\uD83C\uDDE9\uD83C\uDDEA ' + current.de;
+  } else if (current.syn) {
+    document.getElementById('colorNameDe').textContent = '≈ ' + current.syn;
+  } else {
+    document.getElementById('colorNameDe').innerHTML = '\u00A0';
+  }
+  document.getElementById('colorHex').innerHTML = current.hex + ' <span class="category">' + current.cat + '</span>';
+  // Hide reveal button, show action buttons
+  document.getElementById('revealRow').classList.add('hidden-row');
+  document.getElementById('actionButtons').classList.add('visible-row');
+
+  // Reveal neighbour labels with fade-in
+  document.getElementById('leftLabel').classList.remove('hidden');
+  document.getElementById('leftLabel').classList.add('visible');
+  document.getElementById('rightLabel').classList.remove('hidden');
+  document.getElementById('rightLabel').classList.add('visible');
+
+  updateStats();
+}
+
+function removeFromQueues(name) {
+  var i, na = [], nq = [];
+  for (i = 0; i < available.length; i++) {
+    if (available[i].name !== name) na.push(available[i]);
+  }
+  available = na;
+  for (i = 0; i < reviewQueue.length; i++) {
+    if (reviewQueue[i].color.name !== name) nq.push(reviewQueue[i]);
+  }
+  reviewQueue = nq;
+}
+
+function doKnown() {
+  if (!current) return;
+  removeFromQueues(current.name);
+  known.push(current);
+  showColor();
+}
+
+function doPlus5() {
+  if (!current || !revealed) return;
+  removeFromQueues(current.name);
+  reviewQueue.push({ color: current, idx: currentIdx, showAtTurn: turn + 5 });
+  showColor();
+}
+
+function doPlus20() {
+  if (!current || !revealed) return;
+  removeFromQueues(current.name);
+  reviewQueue.push({ color: current, idx: currentIdx, showAtTurn: turn + 20 });
+  showColor();
+}
+
+function updateStats() {
+  document.getElementById('stats').innerHTML =
+    '\u2713 Connues : <strong>' + known.length + '</strong> \u00B7 \u21BB \u00C0 revoir : <strong>' + reviewQueue.length + '</strong> \u00B7 Restantes : <strong>' + available.length + '</strong> \u00B7 Tour : <strong>' + turn + '</strong>';
+}
+
+function startGame(level) {
+  if (level === 2) {
+    allColors = level2Colors.slice();
+    document.getElementById('doneText').textContent = 'Vous connaissez les 281 teintes du niveau 2 !';
+  } else {
+    allColors = level1Colors.slice();
+    document.getElementById('doneText').textContent = 'Vous connaissez les 150 couleurs du niveau 1 !';
+  }
+  available = allColors.slice();
+  reviewQueue = [];
+  known = [];
+  turn = 0;
+  document.getElementById('levelScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  document.getElementById('doneScreen').style.display = 'none';
+  showColor();
+}
+
+function doRestart() {
+  available = allColors.slice();
+  reviewQueue = [];
+  known = [];
+  turn = 0;
+  document.getElementById('gameScreen').style.display = 'block';
+  document.getElementById('doneScreen').style.display = 'none';
+  showColor();
+}
+
+function doChangeLevel() {
+  document.getElementById('gameScreen').style.display = 'none';
+  document.getElementById('doneScreen').style.display = 'none';
+  document.getElementById('levelScreen').style.display = 'block';
+}
+
+// ── TOUCH HANDLING ──
+function tapHandler(id, fn) {
+  var el = document.getElementById(id);
+  var touched = false;
+
+  el.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    touched = true;
+    fn();
+  }, { passive: false });
+
+  el.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }, { passive: false });
+
+  el.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+  }, { passive: false });
+
+  el.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!touched) fn();
+    touched = false;
+  });
+}
+
+tapHandler('revealBtn', doReveal);
+tapHandler('knownBtn', doKnown);
+tapHandler('plus5Btn', doPlus5);
+tapHandler('plus20Btn', doPlus20);
+tapHandler('restartBtn', doRestart);
+tapHandler('changeLevelBtn', doChangeLevel);
+
+document.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+}, { passive: false });
+
+// Level buttons (not using tapHandler since they're dynamically relevant)
+document.getElementById('btn-level1').addEventListener('click', function(e){ e.preventDefault(); startGame(1); });
+document.getElementById('btn-level2').addEventListener('click', function(e){ e.preventDefault(); startGame(2); });
+document.getElementById('btn-level1').addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); startGame(1); }, {passive:false});
+document.getElementById('btn-level2').addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); startGame(2); }, {passive:false});
+// Show level screen on load (don't call showColor yet)
+</script>
+</body>
+</html>

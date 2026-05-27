@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide des Patterns — Stratégie Momentum</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #232735;
+  --border: #2e3345;
+  --text: #e4e6ef;
+  --text-dim: #8b8fa3;
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,0.12);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.12);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.12);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --purple: #a855f7;
+  --purple-dim: rgba(168,85,247,0.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.6;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #e4e6ef, #8b8fa3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+}
+
+.subtitle a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+/* Category tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.tab:hover { border-color: #555; color: var(--text); }
+.tab.active { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+.tab.active.cat-green { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+.tab.active.cat-amber { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+.tab.active.cat-red { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.tab.active.cat-purple { background: var(--purple-dim); border-color: var(--purple); color: var(--purple); }
+
+/* Cards grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.card:hover {
+  border-color: #444;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.card-header {
+  padding: 1.2rem 1.5rem 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.card-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); }
+
+.card-type {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  padding: 0 1.5rem 0.8rem;
+}
+
+.card-svg {
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.card-svg svg {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+}
+
+.card-body {
+  padding: 1rem 1.5rem 1.2rem;
+}
+
+.card-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  font-size: 0.8rem;
+  font-family: 'DM Mono', monospace;
+}
+
+.stat-label { color: var(--text-dim); }
+.stat-value { font-weight: 500; }
+
+.card-desc {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.card-momentum {
+  margin-top: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  border-left: 3px solid var(--blue);
+}
+
+.card-momentum strong { color: var(--text); }
+
+/* Legend */
+.legend {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.legend h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.8rem;
+  color: var(--text);
+}
+
+.legend p {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📊 Guide des Chart Patterns</h1>
+  <p class="subtitle">
+    Classés par catégorie avec taux de succès (source : Tom Bulkowski, <em>Encyclopedia of Chart Patterns</em>). 
+    Focalisé sur les patterns pertinents pour ta stratégie momentum.
+  </p>
+
+  <div class="tabs">
+    <button class="tab active" data-cat="all">Tous</button>
+    <button class="tab cat-green" data-cat="continuation">✅ Continuation haussière</button>
+    <button class="tab cat-amber" data-cat="reversal-bull">🔄 Retournement haussier</button>
+    <button class="tab cat-red" data-cat="reversal-bear">⚠️ Retournement baissier</button>
+    <button class="tab cat-purple" data-cat="danger">🚫 Patterns à éviter</button>
+  </div>
+
+  <div class="grid" id="grid">
+
+    <!-- ==================== CONTINUATION HAUSSIERE ==================== -->
+
+    <!-- Cup and Handle -->
+    <div class="card" data-cat="continuation">
+      <div class="card-header">
+        <span class="card-title">Cup and Handle (Tasse avec anse)</span>
+        <span class="card-badge badge-green">95%</span>
+      </div>
+      <div class="card-type">Continuation haussière • Fiabilité très élevée</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="cupFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#22c55e" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#22c55e" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid -->
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Resistance line -->
+          <line x1="40" y1="40" x2="380" y2="40" stroke="#3b82f6" stroke-width="1" stroke-dasharray="6,4" opacity="0.5"/>
+          <text x="385" y="44" fill="#3b82f6" font-size="10" font-family="DM Mono">Résistance</text>
+          <!-- Cup shape - filled area -->
+          <path d="M 60,40 Q 65,42 75,60 Q 100,120 160,135 Q 220,145 280,120 Q 310,100 325,60 Q 330,45 335,40" fill="url(#cupFill)" stroke="none"/>
+          <!-- Cup shape - line -->
+          <path d="M 60,40 Q 65,42 75,60 Q 100,120 160,135 Q 220,145 280,120 Q 310,100 325,60 Q 330,45 335,40" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <!-- Handle -->
+          <path d="M 335,40 Q 340,42 350,55 Q 360,65 370,55 Q 375,48 380,42" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <!-- Breakout arrow -->
+          <path d="M 380,42 L 410,25" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <polygon points="410,25 403,25 407,33" fill="#22c55e"/>
+          <!-- Labels -->
+          <text x="170" y="170" fill="#8b8fa3" font-size="11" font-family="DM Sans" text-anchor="middle">Cup (Tasse)</text>
+          <text x="357" y="78" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Anse</text>
+          <text x="408" y="18" fill="#22c55e" font-size="10" font-family="DM Mono">BUY</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès : </span><span class="stat-value" style="color:var(--green)">95%</span></span>
+          <span class="stat"><span class="stat-label">Gain moyen : </span><span class="stat-value">+54%</span></span>
+          <span class="stat"><span class="stat-label">Durée : </span><span class="stat-value">30j min</span></span>
+        </div>
+        <div class="card-desc">
+          La tasse forme un U arrondi (pas un V), suivi d'une petite consolidation (l'anse). Le breakout se fait au-dessus de la résistance avec du volume. Plus la tasse est longue et arrondie, plus le signal est fiable.
+        </div>
+        <div class="card-momentum">
+          <strong>🎯 Pour ta stratégie :</strong> Pattern idéal pour le momentum. L'anse est ta zone d'entrée. Vérifie que le RSI est entre 50-70 et que le volume augmente au breakout.
+        </div>
+      </div>
+    </div>
+
+    <!-- Bull Flag -->
+    <div class="card" data-cat="continuation">
+      <div class="card-header">
+        <span class="card-title">Bull Flag (Drapeau haussier)</span>
+        <span class="card-badge badge-green">85%</span>
+      </div>
+      <div class="card-type">Continuation haussière • Fiabilité élevée</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Flagpole -->
+          <path d="M 80,140 L 120,110 L 140,95 L 170,55 L 190,40" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <!-- Flag (consolidation) -->
+          <rect x="185" y="40" width="120" height="45" fill="#22c55e" fill-opacity="0.06" rx="2"/>
+          <line x1="190" y1="40" x2="305" y2="55" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="190" y1="60" x2="305" y2="75" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3"/>
+          <path d="M 190,45 L 210,55 L 230,48 L 250,58 L 270,52 L 290,62 L 305,57" fill="none" stroke="#22c55e" stroke-width="2"/>
+          <!-- Breakout -->
+          <path d="M 305,57 L 320,48 L 340,35 L 370,20" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <polygon points="370,20 363,22 365,29" fill="#22c55e"/>
+          <!-- Labels -->
+          <text x="130" y="170" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Mât</text>
+          <text x="247" y="100" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Drapeau</text>
+          <text x="375" y="17" fill="#22c55e" font-size="10" font-family="DM Mono">BUY</text>
+          <path d="M 80,140 L 80,40" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+          <path d="M 305,57 L 305,0" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+          <text x="60" y="90" fill="#f59e0b" font-size="9" font-family="DM Mono" transform="rotate(-90,60,90)">Objectif ≈ Mât</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès : </span><span class="stat-value" style="color:var(--green)">~85%</span></span>
+          <span class="stat"><span class="stat-label">Gain moyen : </span><span class="stat-value">+39%</span></span>
+          <span class="stat"><span class="stat-label">Durée flag : </span><span class="stat-value">1-4 sem</span></span>
+        </div>
+        <div class="card-desc">
+          Après une forte hausse (le mât), le prix consolide en légère baisse dans un canal parallèle descendant. Le volume diminue pendant le drapeau puis explose au breakout. L'objectif de prix ≈ hauteur du mât.
+        </div>
+        <div class="card-momentum">
+          <strong>🎯 Pour ta stratégie :</strong> Excellent pour le momentum. Correspond à ta description "base + cassure". Le volume en baisse pendant la consolidation puis en hausse au breakout est le signal clé.
+        </div>
+      </div>
+    </div>
+
+    <!-- Ascending Triangle -->
+    <div class="card" data-cat="continuation">
+      <div class="card-header">
+        <span class="card-title">Triangle Ascendant</span>
+        <span class="card-badge badge-green">83%</span>
+      </div>
+      <div class="card-type">Continuation haussière • Fiabilité élevée</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Resistance -->
+          <line x1="80" y1="50" x2="340" y2="50" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="345" y="54" fill="#3b82f6" font-size="10" font-family="DM Mono">Résistance</text>
+          <!-- Support ascending -->
+          <line x1="80" y1="140" x2="320" y2="55" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="120" y="155" fill="#f59e0b" font-size="10" font-family="DM Mono">Support ascendant</text>
+          <!-- Triangle fill -->
+          <path d="M 80,140 L 80,50 L 320,50 Z" fill="#22c55e" fill-opacity="0.05"/>
+          <!-- Price action -->
+          <path d="M 80,135 L 100,52 L 130,115 L 160,53 L 195,95 L 230,51 L 260,78 L 300,52 L 320,53" fill="none" stroke="#22c55e" stroke-width="2"/>
+          <!-- Breakout -->
+          <path d="M 320,53 L 340,45 L 370,25" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <polygon points="370,25 363,27 365,34" fill="#22c55e"/>
+          <text x="375" y="22" fill="#22c55e" font-size="10" font-family="DM Mono">BUY</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès : </span><span class="stat-value" style="color:var(--green)">83%</span></span>
+          <span class="stat"><span class="stat-label">Gain moyen : </span><span class="stat-value">+43%</span></span>
+          <span class="stat"><span class="stat-label">Durée : </span><span class="stat-value">2-12 sem</span></span>
+        </div>
+        <div class="card-desc">
+          Le prix teste une résistance horizontale plusieurs fois tandis que les creux sont de plus en plus hauts. Chaque test de résistance affaiblit les vendeurs. Le breakout avec volume confirme la continuation.
+        </div>
+        <div class="card-momentum">
+          <strong>🎯 Pour ta stratégie :</strong> Pattern d'accumulation classique. Ta règle "si pattern d'accumulation, attendre qu'il soit terminé" s'applique ici — entre au breakout, pas avant.
+        </div>
+      </div>
+    </div>
+
+    <!-- Flat Base Breakout -->
+    <div class="card" data-cat="continuation">
+      <div class="card-header">
+        <span class="card-title">Flat Base + Breakout (Base plate)</span>
+        <span class="card-badge badge-green">~80%</span>
+      </div>
+      <div class="card-type">Continuation haussière • Fiabilité élevée</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Prior uptrend -->
+          <path d="M 50,140 L 80,120 L 110,100 L 140,75 L 160,60" fill="none" stroke="#22c55e" stroke-width="2" stroke-dasharray="4,3" opacity="0.5"/>
+          <!-- Flat base -->
+          <rect x="155" y="52" width="170" height="25" fill="#3b82f6" fill-opacity="0.08" rx="2"/>
+          <line x1="155" y1="52" x2="325" y2="52" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="155" y1="77" x2="325" y2="77" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3"/>
+          <!-- Price in base -->
+          <path d="M 160,60 L 175,55 L 190,65 L 205,58 L 220,70 L 235,56 L 255,63 L 270,55 L 285,68 L 300,57 L 315,62 L 325,55" fill="none" stroke="#22c55e" stroke-width="2"/>
+          <!-- Breakout -->
+          <path d="M 325,55 L 345,45 L 365,30 L 395,18" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <polygon points="395,18 388,20 390,27" fill="#22c55e"/>
+          <!-- Labels -->
+          <text x="240" y="95" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Base plate (consolidation serrée)</text>
+          <text x="105" y="165" fill="#8b8fa3" font-size="10" font-family="DM Sans">Tendance préalable</text>
+          <text x="400" y="15" fill="#22c55e" font-size="10" font-family="DM Mono">BUY</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès : </span><span class="stat-value" style="color:var(--green)">~80%</span></span>
+          <span class="stat"><span class="stat-label">Gain moyen : </span><span class="stat-value">Variable</span></span>
+          <span class="stat"><span class="stat-label">Durée base : </span><span class="stat-value">3-8 sem</span></span>
+        </div>
+        <div class="card-desc">
+          Après une hausse, le prix se consolide dans une fourchette très étroite (< 10-15 %). La volatilité comprimée prépare un mouvement explosif. Le breakout avec volume est le signal. C'est le pattern favori de William O'Neil (CANSLIM).
+        </div>
+        <div class="card-momentum">
+          <strong>🎯 Pour ta stratégie :</strong> C'est le pattern "base + cassure" que tu mentionnes dans tes critères. La compression de volatilité + tes critères EMA/RSI = setup idéal.
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== RETOURNEMENT HAUSSIER ==================== -->
+
+    <!-- Inverse Head & Shoulders -->
+    <div class="card" data-cat="reversal-bull">
+      <div class="card-header">
+        <span class="card-title">Tête-Épaules Inversé</span>
+        <span class="card-badge badge-green">89%</span>
+      </div>
+      <div class="card-type">Retournement haussier • Fiabilité très élevée</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Neckline -->
+          <line x1="60" y1="55" x2="380" y2="50" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="385" y="54" fill="#3b82f6" font-size="10" font-family="DM Mono">Neckline</text>
+          <!-- Prior downtrend -->
+          <path d="M 50,30 L 75,40 L 95,50" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+          <!-- Pattern -->
+          <path d="M 95,50 L 110,55 L 130,95 L 145,100 L 160,90 L 175,55 L 195,52 L 210,60 L 240,140 L 260,145 L 275,130 L 295,55 L 310,50 L 325,55 L 340,90 L 350,95 L 365,80 L 378,52" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <!-- Breakout -->
+          <path d="M 378,52 L 395,40 L 415,25" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <polygon points="415,25 408,27 410,34" fill="#22c55e"/>
+          <!-- Labels -->
+          <text x="147" y="115" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Épaule G</text>
+          <text x="255" y="165" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Tête</text>
+          <text x="355" y="110" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Épaule D</text>
+          <text x="415" y="18" fill="#22c55e" font-size="10" font-family="DM Mono">BUY</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès : </span><span class="stat-value" style="color:var(--green)">89%</span></span>
+          <span class="stat"><span class="stat-label">Gain moyen : </span><span class="stat-value">+45%</span></span>
+          <span class="stat"><span class="stat-label">Durée : </span><span class="stat-value">1-6 mois</span></span>
+        </div>
+        <div class="card-desc">
+          Trois creux : épaule gauche, tête (plus bas), épaule droite (plus haut que la tête). La cassure de la neckline confirme le retournement. Le volume doit augmenter au breakout.
+        </div>
+        <div class="card-momentum">
+          <strong>🎯 Pour ta stratégie :</strong> Moins pertinent pour le momentum pur (tu achètes des actions déjà en hausse), mais utile si tu repères une action qui termine une correction et repart. Vérifie que Prix > EMA50 > EMA200 après le breakout.
+        </div>
+      </div>
+    </div>
+
+    <!-- Double Bottom -->
+    <div class="card" data-cat="reversal-bull">
+      <div class="card-header">
+        <span class="card-title">Double Bottom (Double creux — W)</span>
+        <span class="card-badge badge-green">88%</span>
+      </div>
+      <div class="card-type">Retournement haussier • Fiabilité élevée</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Neckline -->
+          <line x1="60" y1="55" x2="380" y2="55" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="385" y="59" fill="#3b82f6" font-size="10" font-family="DM Mono">Neckline</text>
+          <!-- Prior downtrend -->
+          <path d="M 50,25 L 80,40 L 100,50" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+          <!-- W pattern -->
+          <path d="M 100,50 L 120,65 L 145,120 L 165,135 L 185,115 L 200,70 L 215,55 L 230,60 L 250,80 L 275,125 L 295,130 L 310,115 L 330,70 L 345,55" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <!-- Breakout -->
+          <path d="M 345,55 L 365,40 L 395,22" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <polygon points="395,22 388,24 390,31" fill="#22c55e"/>
+          <!-- Labels -->
+          <text x="165" y="152" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">1er creux</text>
+          <text x="295" y="147" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">2e creux</text>
+          <text x="200" y="170" fill="#f59e0b" font-size="10" font-family="DM Mono" text-anchor="middle">« W »</text>
+          <text x="400" y="18" fill="#22c55e" font-size="10" font-family="DM Mono">BUY</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès : </span><span class="stat-value" style="color:var(--green)">88%</span></span>
+          <span class="stat"><span class="stat-label">Gain moyen : </span><span class="stat-value">+50%</span></span>
+          <span class="stat"><span class="stat-label">Durée : </span><span class="stat-value">1-3 mois</span></span>
+        </div>
+        <div class="card-desc">
+          Le prix touche un support deux fois, formant un "W". Le deuxième creux au même niveau (± 3-5 %) confirme que les vendeurs n'arrivent plus à pousser le prix plus bas. Breakout au-dessus du pic intermédiaire.
+        </div>
+        <div class="card-momentum">
+          <strong>🎯 Pour ta stratégie :</strong> Utile pour identifier la fin d'une correction dans une tendance haussière de fond. Attends la cassure de la neckline + confirmation Prix > EMA50 avant d'entrer.
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== RETOURNEMENT BAISSIER (SORTIE) ==================== -->
+
+    <!-- Double Top -->
+    <div class="card" data-cat="reversal-bear">
+      <div class="card-header">
+        <span class="card-title">Double Top (Double sommet — M)</span>
+        <span class="card-badge badge-red">75%</span>
+      </div>
+      <div class="card-type">Retournement baissier • Signal de sortie</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Support / Neckline -->
+          <line x1="60" y1="120" x2="380" y2="120" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="385" y="124" fill="#3b82f6" font-size="10" font-family="DM Mono">Neckline</text>
+          <!-- Prior uptrend -->
+          <path d="M 50,150 L 80,135 L 100,120" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+          <!-- M pattern -->
+          <path d="M 100,120 L 120,100 L 145,50 L 165,35 L 185,55 L 200,95 L 215,118 L 230,110 L 250,85 L 275,45 L 295,38 L 310,55 L 330,95 L 345,120" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <!-- Breakdown -->
+          <path d="M 345,120 L 365,135 L 395,155" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <polygon points="395,155 388,150 390,143" fill="#ef4444"/>
+          <!-- Labels -->
+          <text x="165" y="28" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">1er sommet</text>
+          <text x="295" y="28" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">2e sommet</text>
+          <text x="240" y="170" fill="#f59e0b" font-size="10" font-family="DM Mono" text-anchor="middle">« M »</text>
+          <text x="400" y="162" fill="#ef4444" font-size="10" font-family="DM Mono">SELL</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès bearish : </span><span class="stat-value" style="color:var(--red)">75%</span></span>
+          <span class="stat"><span class="stat-label">Baisse moy. : </span><span class="stat-value">-20%</span></span>
+          <span class="stat"><span class="stat-label">Durée : </span><span class="stat-value">1-3 mois</span></span>
+        </div>
+        <div class="card-desc">
+          Le prix teste un sommet deux fois mais échoue à casser. Forme un "M". Si le volume est plus élevé au 1er sommet qu'au 2e, la probabilité de succès augmente de 10 %. Confirmation à la cassure de la neckline.
+        </div>
+        <div class="card-momentum">
+          <strong>⚠️ Pour ta stratégie :</strong> Signal d'alerte pour tes positions existantes. Si tu vois un M se former sur une de tes actions, vérifie ton scoring de sortie. Combiné avec RSI en divergence baissière = signal fort.
+        </div>
+      </div>
+    </div>
+
+    <!-- Head & Shoulders -->
+    <div class="card" data-cat="reversal-bear">
+      <div class="card-header">
+        <span class="card-title">Tête-Épaules (classique)</span>
+        <span class="card-badge badge-red">83%</span>
+      </div>
+      <div class="card-type">Retournement baissier • Signal de sortie fort</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Neckline -->
+          <line x1="60" y1="115" x2="380" y2="118" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="385" y="122" fill="#3b82f6" font-size="10" font-family="DM Mono">Neckline</text>
+          <!-- Prior uptrend -->
+          <path d="M 50,145 L 80,130 L 95,115" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+          <!-- Pattern -->
+          <path d="M 95,115 L 115,100 L 130,70 L 145,65 L 160,75 L 175,110 L 195,115 L 210,100 L 230,45 L 250,30 L 265,40 L 285,100 L 300,115 L 315,110 L 335,75 L 345,70 L 360,80 L 375,118" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <!-- Breakdown -->
+          <path d="M 375,118 L 390,130 L 410,150" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <polygon points="410,150 403,145 405,138" fill="#ef4444"/>
+          <!-- Labels -->
+          <text x="145" y="58" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Ép. G</text>
+          <text x="250" y="23" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Tête</text>
+          <text x="347" y="63" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Ép. D</text>
+          <text x="415" y="155" fill="#ef4444" font-size="10" font-family="DM Mono">SELL</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès bearish : </span><span class="stat-value" style="color:var(--red)">83%</span></span>
+          <span class="stat"><span class="stat-label">Baisse moy. : </span><span class="stat-value">-22%</span></span>
+          <span class="stat"><span class="stat-label">Durée : </span><span class="stat-value">2-6 mois</span></span>
+        </div>
+        <div class="card-desc">
+          Trois sommets : épaule gauche, tête (plus haut), épaule droite (plus bas que la tête). L'épaule droite plus basse montre l'essoufflement des acheteurs. La cassure de la neckline confirme le retournement.
+        </div>
+        <div class="card-momentum">
+          <strong>⚠️ Pour ta stratégie :</strong> Le pattern baissier le plus fiable. Si tu le repères sur une de tes positions, c'est un signal fort pour sortir, même avant que ton stop loss ne soit touché.
+        </div>
+      </div>
+    </div>
+
+    <!-- Rounding Top -->
+    <div class="card" data-cat="reversal-bear">
+      <div class="card-header">
+        <span class="card-title">Rounding Top (Sommet arrondi)</span>
+        <span class="card-badge badge-red">~72%</span>
+      </div>
+      <div class="card-type">Retournement baissier • Signal de sortie progressif</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Support -->
+          <line x1="60" y1="120" x2="380" y2="120" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="385" y="124" fill="#3b82f6" font-size="10" font-family="DM Mono">Support</text>
+          <!-- Rounded top -->
+          <path d="M 70,120 Q 80,115 100,90 Q 130,55 180,38 Q 230,30 280,42 Q 320,58 345,90 Q 360,110 370,120" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <!-- Breakdown -->
+          <path d="M 370,120 L 385,132 L 405,150" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <polygon points="405,150 398,145 400,138" fill="#ef4444"/>
+          <!-- Volume bars decreasing -->
+          <rect x="80" y="140" width="12" height="15" fill="#8b8fa3" fill-opacity="0.4" rx="1"/>
+          <rect x="110" y="142" width="12" height="13" fill="#8b8fa3" fill-opacity="0.35" rx="1"/>
+          <rect x="140" y="144" width="12" height="11" fill="#8b8fa3" fill-opacity="0.3" rx="1"/>
+          <rect x="170" y="146" width="12" height="9" fill="#8b8fa3" fill-opacity="0.25" rx="1"/>
+          <rect x="200" y="148" width="12" height="7" fill="#8b8fa3" fill-opacity="0.2" rx="1"/>
+          <rect x="230" y="146" width="12" height="9" fill="#ef4444" fill-opacity="0.3" rx="1"/>
+          <rect x="260" y="144" width="12" height="11" fill="#ef4444" fill-opacity="0.35" rx="1"/>
+          <rect x="290" y="141" width="12" height="14" fill="#ef4444" fill-opacity="0.4" rx="1"/>
+          <rect x="320" y="138" width="12" height="17" fill="#ef4444" fill-opacity="0.45" rx="1"/>
+          <text x="200" y="170" fill="#8b8fa3" font-size="9" font-family="DM Sans" text-anchor="middle">Volume: ↓ en hausse, ↑ en baisse</text>
+          <text x="405" y="158" fill="#ef4444" font-size="10" font-family="DM Mono">SELL</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Succès bearish : </span><span class="stat-value" style="color:var(--red)">~72%</span></span>
+          <span class="stat"><span class="stat-label">Baisse moy. : </span><span class="stat-value">-18%</span></span>
+          <span class="stat"><span class="stat-label">Durée : </span><span class="stat-value">2-6 mois</span></span>
+        </div>
+        <div class="card-desc">
+          Le prix monte graduellement, s'aplatit, puis redescend — formant un arc. Le volume diminue pendant la montée et augmente pendant la descente. Plus lent à se former que les autres patterns, mais souvent visible sur iRadimed actuellement.
+        </div>
+        <div class="card-momentum">
+          <strong>⚠️ Pour ta stratégie :</strong> Correspond à ton critère "pente de EMA50 qui s'aplatit". Le momentum s'essouffle progressivement. Si tu vois ça + RSI en baisse, c'est un early warning.
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PATTERNS À ÉVITER ==================== -->
+
+    <!-- Parabolic -->
+    <div class="card" data-cat="danger">
+      <div class="card-header">
+        <span class="card-title">Mouvement Parabolique</span>
+        <span class="card-badge badge-red">ÉVITER</span>
+      </div>
+      <div class="card-type">🚫 Pattern dangereux • +50% sur 1 mois</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Parabolic rise -->
+          <path d="M 60,150 Q 100,145 140,135 Q 180,120 210,100 Q 240,75 260,50 Q 275,30 285,18" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <!-- Crash -->
+          <path d="M 285,18 L 300,25 L 320,60 L 340,90 L 360,110 L 390,140" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,3"/>
+          <!-- Danger zone -->
+          <rect x="230" y="10" width="80" height="50" fill="#ef4444" fill-opacity="0.08" rx="4" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="270" y="72" fill="#ef4444" font-size="10" font-family="DM Mono" text-anchor="middle">ZONE DANGER</text>
+          <text x="270" y="84" fill="#ef4444" font-size="9" font-family="DM Sans" text-anchor="middle">+50% sur 1M</text>
+          <!-- Arrow indicating crash -->
+          <text x="380" y="155" fill="#ef4444" font-size="10" font-family="DM Mono">Crash</text>
+          <text x="100" y="165" fill="#8b8fa3" font-size="10" font-family="DM Sans">Accélération de plus en plus rapide</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Risque de crash : </span><span class="stat-value" style="color:var(--red)">TRÈS ÉLEVÉ</span></span>
+          <span class="stat"><span class="stat-label">Baisse typique : </span><span class="stat-value">-30 à -60%</span></span>
+        </div>
+        <div class="card-desc">
+          L'action monte de plus en plus vite, la courbe s'accentue comme une parabole. RSI souvent > 80. Le volume explose. Ça semble inarrêtable… jusqu'au retournement brutal. Exemple actuel : l'argent (silver) qui a fait +50% puis -15% en un jour.
+        </div>
+        <div class="card-momentum">
+          <strong>🚫 Ta règle :</strong> "Hausse du prix sur 1M < 50%". Cette règle te protège exactement de ce pattern. Ne jamais acheter une parabolique, même si elle "a l'air bien".
+        </div>
+      </div>
+    </div>
+
+    <!-- Dead Cat Bounce -->
+    <div class="card" data-cat="danger">
+      <div class="card-header">
+        <span class="card-title">Dead Cat Bounce</span>
+        <span class="card-badge badge-red">ÉVITER</span>
+      </div>
+      <div class="card-type">🚫 Faux signal haussier • Piège classique</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- EMA200 -->
+          <path d="M 50,60 Q 150,65 250,80 Q 350,95 420,105" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="420" y="100" fill="#f59e0b" font-size="9" font-family="DM Mono">EMA200</text>
+          <!-- Big drop -->
+          <path d="M 60,40 L 80,42 L 100,50 L 120,70 L 140,100 L 155,130 L 165,140" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+          <!-- Bounce -->
+          <path d="M 165,140 L 180,125 L 200,105 L 220,90 L 240,82" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+          <!-- Fake signal -->
+          <circle cx="240" cy="82" r="12" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="260" y="76" fill="#ef4444" font-size="9" font-family="DM Mono">PIÈGE!</text>
+          <!-- Resume drop -->
+          <path d="M 240,82 L 260,88 L 280,100 L 310,120 L 340,140 L 380,155" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,3"/>
+          <!-- Labels -->
+          <text x="110" y="168" fill="#8b8fa3" font-size="10" font-family="DM Sans">Chute</text>
+          <text x="200" y="168" fill="#8b8fa3" font-size="10" font-family="DM Sans">Rebond</text>
+          <text x="320" y="168" fill="#8b8fa3" font-size="10" font-family="DM Sans">Suite de la chute</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Risque : </span><span class="stat-value" style="color:var(--red)">TRÈS ÉLEVÉ</span></span>
+          <span class="stat"><span class="stat-label">Faux signal : </span><span class="stat-value">Fréquent</span></span>
+        </div>
+        <div class="card-desc">
+          Après une grosse chute, le prix rebondit fortement — donnant l'illusion d'un retournement. Mais le rebond échoue sous l'EMA200 et la chute reprend. L'euphorie du rebond attire les acheteurs imprudents qui se retrouvent piégés.
+        </div>
+        <div class="card-momentum">
+          <strong>🚫 Ta règle :</strong> "Disqualifier : Dead cat bounce (< EMA200 après gros rebond)". Ton critère Prix > EMA50 > EMA200 te protège automatiquement de ce piège.
+        </div>
+      </div>
+    </div>
+
+    <!-- Erratic Range -->
+    <div class="card" data-cat="danger">
+      <div class="card-header">
+        <span class="card-title">Range Erratique (Montagnes russes)</span>
+        <span class="card-badge badge-red">ÉVITER</span>
+      </div>
+      <div class="card-type">🚫 Pas de tendance • Destruction de capital par stops</div>
+      <div class="card-svg">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg">
+          <line x1="40" y1="20" x2="40" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <line x1="40" y1="155" x2="420" y2="155" stroke="#2e3345" stroke-width="1"/>
+          <!-- Range boundaries -->
+          <line x1="60" y1="40" x2="400" y2="40" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+          <line x1="60" y1="130" x2="400" y2="130" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+          <rect x="60" y="40" width="340" height="90" fill="#ef4444" fill-opacity="0.04"/>
+          <!-- Erratic price -->
+          <path d="M 70,80 L 85,45 L 100,110 L 115,50 L 135,125 L 150,55 L 165,120 L 180,48 L 200,115 L 215,55 L 235,128 L 250,42 L 270,120 L 290,50 L 305,125 L 320,45 L 340,118 L 355,52 L 375,115 L 395,60" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.7"/>
+          <!-- EMA50 flat -->
+          <line x1="70" y1="85" x2="395" y2="85" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5"/>
+          <text x="400" y="89" fill="#22c55e" font-size="9" font-family="DM Mono" opacity="0.6">EMA50 plate</text>
+          <!-- Labels -->
+          <text x="230" y="170" fill="#8b8fa3" font-size="10" font-family="DM Sans" text-anchor="middle">Oscillations sans direction = stops déclenchés en boucle</text>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          <span class="stat"><span class="stat-label">Probabilité de gain : </span><span class="stat-value" style="color:var(--red)">~50% (aléatoire)</span></span>
+          <span class="stat"><span class="stat-label">Risque : </span><span class="stat-value">Mort par mille coupures</span></span>
+        </div>
+        <div class="card-desc">
+          Le prix oscille violemment entre support et résistance sans direction claire. L'EMA50 est plate ou serpente. Chaque entrée déclenche un stop loss. C'est le pire environnement pour le momentum — le marché ne va nulle part.
+        </div>
+        <div class="card-momentum">
+          <strong>🚫 Ta règle :</strong> "Disqualifier : range erratique (montagnes russes)" + "Pente de EMA50 en hausse (pas plate)". Si l'EMA50 est plate, passe ton tour.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <h3>📚 Notes sur les taux de succès</h3>
+    <p>
+      Les statistiques proviennent principalement des travaux de Tom Bulkowski (<em>Encyclopedia of Chart Patterns</em>), basés sur des milliers d'occurrences testées sur des actions US. Les taux de succès sont mesurés en marché haussier — en marché baissier, les patterns haussiers ont des taux significativement plus bas. Ces chiffres mesurent le pourcentage de patterns qui atteignent au moins le break-even après le breakout, pas le gain garanti. Combine toujours un pattern avec tes autres critères (EMA, RSI, volume, fondamentaux) pour augmenter la fiabilité.
+    </p>
+  </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const cat = tab.dataset.cat;
+    document.querySelectorAll('.card').forEach(card => {
+      if (cat === 'all' || card.dataset.cat === cat) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tables · Facteurs Premiers</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+    -webkit-touch-callout:none;
+    -webkit-user-select:none; user-select:none; }
+  body {
+    min-height:100vh; min-height:-webkit-fill-available;
+    display:flex; align-items:center; justify-content:center;
+    font-family:-apple-system,'Segoe UI',system-ui,sans-serif;
+    background:#1a1a2e; color:#eee;
+    overflow:hidden; position:fixed; width:100%; height:100%;
+  }
+  html { height:-webkit-fill-available; overflow:hidden; }
+  .container {
+    text-align:center; max-width:520px; width:95%;
+    padding:0.4rem 0 0.5rem;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  h1 { font-size:0.9rem; margin-bottom:0.35rem; font-weight:300;
+    letter-spacing:0.05em; color:#aab; }
+
+  /* Selector rows */
+  .sel-row { display:flex; gap:0.3rem; margin-bottom:0.25rem; justify-content:center; width:340px; }
+
+  .sel-btn {
+    flex:1; padding:10px 0; border:none; border-radius:18px;
+    font-size:0.72rem; font-weight:600; cursor:pointer;
+    touch-action:manipulation;
+    background:rgba(255,255,255,0.08); color:#99a;
+    transition: background 0.15s, color 0.15s;
+    white-space:nowrap;
+  }
+  .sel-btn.active { background:linear-gradient(135deg,#667eea,#764ba2); color:white; }
+
+  /* Card */
+  .card-wrapper {
+    width:340px; height:260px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#0d1926,#16213e);
+    box-shadow:0 10px 40px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.07);
+    margin-bottom:0.4rem; flex-shrink:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .card-wrapper::before {
+    content:''; position:absolute; inset:0;
+    background: radial-gradient(ellipse at 30% 30%, rgba(102,126,234,0.1) 0%, transparent 60%);
+    pointer-events:none;
+  }
+  .card-label {
+    font-size:0.6rem; font-weight:500; color:#445; letter-spacing:0.08em;
+    text-transform:uppercase; margin-bottom:0.3rem; padding:0 1rem;
+  }
+  /* mult/div */
+  .question-display {
+    font-size:3.4rem; font-weight:700; color:#e8e8ff;
+    letter-spacing:0.02em; line-height:1.15;
+    text-shadow:0 2px 20px rgba(102,126,234,0.4);
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .q-line1 { display:flex; align-items:baseline; }
+  .q-line2 { display:flex; align-items:baseline; }
+  .question-display .op  { color:#667eea; margin:0 0.15em; }
+  .question-display .eq  { color:#aab; margin:0 0.15em; font-weight:300; }
+  .question-display .answer-slot {
+    display:inline-block; min-width:1.5em;
+    border-bottom:3px solid #667eea; color:transparent;
+  }
+  .question-display .answer-slot.revealed { color:#f5c842; border-bottom-color:#f5c842; }
+  /* prime */
+  .prime-question {
+    font-size:3.4rem; font-weight:700; color:#e8e8ff;
+    text-shadow:0 2px 20px rgba(102,126,234,0.4);
+    transition: font-size 0.2s;
+  }
+
+  /* progress bar */
+  .progress-bar-bg { position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(255,255,255,0.06); }
+  .progress-bar-fill { height:100%; background:linear-gradient(90deg,#667eea,#f5c842); transition:width 0.4s ease; border-radius:0 2px 2px 0; }
+
+  .buttons-zone { height:3.4rem; display:flex; align-items:center; justify-content:center; margin-bottom:0.2rem; position:relative; }
+  .buttons { display:flex; gap:0.45rem; justify-content:center; flex-wrap:wrap; position:absolute; }
+  .buttons.hidden { visibility:hidden; pointer-events:none; }
+  button {
+    padding:12px 19px; border:none; border-radius:14px;
+    font-size:0.8rem; font-weight:700; cursor:pointer;
+    touch-action:manipulation; position:relative; z-index:100;
+  }
+  button:active:not(:disabled) { transform:scale(0.95); opacity:0.85; }
+  button:disabled { cursor:default; opacity:0.35; }
+  .btn-reveal  { background:linear-gradient(135deg,#667eea,#764ba2); color:white; min-width:185px; }
+  .btn-known   { background:linear-gradient(135deg,#43e97b,#38f9d7); color:#1a1a2e; flex:1; }
+  .btn-review3 { background:linear-gradient(135deg,#fa709a,#fee140); color:#1a1a2e; flex:1; }
+  .btn-review5 { background:linear-gradient(135deg,#f7971e,#ffd200); color:#1a1a2e; flex:1; }
+  .btn-review20{ background:linear-gradient(135deg,#eb3349,#f45c43); color:white;   flex:1; }
+  .btn-restart { background:linear-gradient(135deg,#667eea,#764ba2); color:white; min-width:185px; }
+  .action-row  { display:flex; flex-direction:row; gap:0.35rem; width:340px; }
+
+  .stats { font-size:0.62rem; color:#445; line-height:1.9; }
+  .stats strong { color:#667; }
+
+  .done-screen { display:none; padding:1.5rem 1rem; }
+  .done-screen h2 { font-size:1.8rem; margin-bottom:0.8rem; font-weight:300; }
+  .done-screen p  { color:#99a; margin-bottom:1.6rem; line-height:1.6; }
+  .done-icon { font-size:2.6rem; margin-bottom:0.4rem; }
+
+  @media (max-width:400px) {
+    .card-wrapper { width:290px; height:220px; }
+    .question-display { font-size:3.2rem; }
+    .prime-question   { font-size:3.2rem; }
+    button { padding:10px 13px; font-size:0.83rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>✖️ Tables &amp; Facteurs Premiers</h1>
+
+  <!-- Row 1 : type (multi-select) -->
+  <div class="sel-row">
+    <button class="sel-btn active" id="typeMult"  onclick="toggleType('mult')">✕ Mult.</button>
+    <button class="sel-btn"        id="typeDiv"   onclick="toggleType('div')">÷ Div.</button>
+    <button class="sel-btn"        id="typePrime" onclick="toggleType('prime')">𝑝 Fact. premiers</button>
+  </div>
+  <!-- Row 2 : range (multi-select, hidden for prime-only) -->
+  <div class="sel-row" id="rangeRow">
+    <button class="sel-btn active" id="range1010" onclick="toggleRange('1010')">Tables ≤10</button>
+    <button class="sel-btn active" id="range2020" onclick="toggleRange('2020')">Tables >10</button>
+  </div>
+
+  <div id="gameScreen">
+    <div class="card-wrapper">
+      <div class="card-label" id="cardLabel">…</div>
+
+      <div id="layoutMD" style="display:none">
+        <div class="question-display">
+          <div class="q-line1"><span id="qa"></span><span class="op" id="qop"></span><span id="qb"></span></div>
+          <div class="q-line2"><span class="answer-slot" id="qans">?</span></div>
+        </div>
+      </div>
+
+      <div id="layoutPrime" style="display:none">
+        <div class="prime-question" id="primeNum"></div>
+      </div>
+
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="buttons-zone">
+      <div class="buttons" id="revealButtons">
+        <button class="btn-reveal" id="revealBtn">Voir la réponse</button>
+      </div>
+      <div class="buttons hidden" id="actionButtons">
+        <div class="action-row">
+          <button class="btn-known"   id="knownBtn">Connu</button>
+          <button class="btn-review3"  id="reviewBtn3">+3</button>
+          <button class="btn-review5"  id="reviewBtn5">+5</button>
+          <button class="btn-review20" id="reviewBtn20">+20</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="done-screen" id="doneScreen">
+    <div class="done-icon">🎉</div>
+    <h2>Bravo !</h2>
+    <p>Tu as révisé toutes les cartes.<br>Continue à t'entraîner pour bien mémoriser !</p>
+    <button class="btn-restart" id="restartBtn">🔄 Recommencer</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════
+//  STATE
+// ═══════════════════════
+var activeTypes  = { mult:true, div:false, prime:false };
+var activeRanges = { '1010':true, '2020':true }; // 3-10 and 11-20
+
+var allCards    = [];
+var available   = [];
+var reviewQueue = [];
+var known       = [];
+var turn        = 0;
+var current     = null;
+var revealed    = false;
+
+// Tables ×1, ×2, ×10 are excluded (trivial)
+var EXCLUDED = [1, 2, 10];
+
+// ═══════════════════════
+//  PRIME HELPERS
+// ═══════════════════════
+function primeFactors(n) {
+  var f = [], d = 2;
+  while (d * d <= n) { while (n % d === 0) { f.push(d); n /= d; } d++; }
+  if (n > 1) f.push(n);
+  return f;
+}
+
+function superscript(n) {
+  return String(n).replace(/[0-9]/g, function(c){
+    return ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'][+c];
+  });
+}
+
+function formatFactors(factors) {
+  var counts = {}, order = [];
+  factors.forEach(function(f){
+    if (!counts[f]) { counts[f]=0; order.push(f); }
+    counts[f]++;
+  });
+  return order.map(function(f){
+    return counts[f]>1 ? f+superscript(counts[f]) : String(f);
+  }).join(' × ');
+}
+
+function isPrime(n) {
+  if (n < 2) return false;
+  for (var i = 2; i*i <= n; i++) if (n%i===0) return false;
+  return true;
+}
+
+// ═══════════════════════
+//  CARD BUILDERS
+// ═══════════════════════
+function buildMDCards(type) {
+  var cards = [];
+  var ranges = [];
+  if (activeRanges['1010']) ranges.push([3,10]);
+  if (activeRanges['2020']) ranges.push([11,20]);
+  ranges.forEach(function(ri) {
+    for (var i = ri[0]; i <= ri[1]; i++) {
+      if (EXCLUDED.indexOf(i) !== -1) continue;
+      ranges.forEach(function(rj) {
+        for (var j = rj[0]; j <= rj[1]; j++) {
+          if (EXCLUDED.indexOf(j) !== -1) continue;
+          var prod = i * j;
+          if (type === 'mult')
+            cards.push({ id:'m'+i+'_'+j, type:'mult', a:i, b:j, answer:prod, table:i });
+          if (type === 'div')
+            cards.push({ id:'d'+prod+'_'+i, type:'div', a:prod, b:i, answer:j, table:i });
+        }
+      });
+    }
+  });
+  // deduplicate by id
+  var seen = {}, out = [];
+  cards.forEach(function(c){ if (!seen[c.id]) { seen[c.id]=1; out.push(c); } });
+  return out;
+}
+
+function buildPrimeCards() {
+  var cards = [];
+  for (var n = 4; n <= 500; n++) {
+    if (isPrime(n)) continue;
+    var f = primeFactors(n);
+    if (f.length < 2) continue;
+    cards.push({ id:'p'+n, type:'prime', num:n, factors:f, answerStr:formatFactors(f) });
+  }
+  return cards;
+}
+
+function shuffle(arr) {
+  for (var k=arr.length-1; k>0; k--) {
+    var r=Math.floor(Math.random()*(k+1)), t=arr[k]; arr[k]=arr[r]; arr[r]=t;
+  }
+  return arr;
+}
+
+function buildCards() {
+  var cards = [];
+  if (activeTypes.mult)  cards = cards.concat(buildMDCards('mult'));
+  if (activeTypes.div)   cards = cards.concat(buildMDCards('div'));
+  if (activeTypes.prime) cards = cards.concat(buildPrimeCards());
+  return shuffle(cards);
+}
+
+// ═══════════════════════
+//  UI CONTROLS
+// ═══════════════════════
+function toggleType(t) {
+  var next = !activeTypes[t];
+  if (!next) {
+    var count = (activeTypes.mult?1:0)+(activeTypes.div?1:0)+(activeTypes.prime?1:0);
+    if (count <= 1) return;
+  }
+  activeTypes[t] = next;
+  document.getElementById('type'+t.charAt(0).toUpperCase()+t.slice(1))
+    .classList.toggle('active', next);
+  updateRangeRowVisibility();
+  doRestart();
+}
+
+function toggleRange(r) {
+  var next = !activeRanges[r];
+  if (!next) {
+    var count = (activeRanges['1010']?1:0)+(activeRanges['2020']?1:0);
+    if (count <= 1) return;
+  }
+  activeRanges[r] = next;
+  document.getElementById('range'+r).classList.toggle('active', next);
+  doRestart();
+}
+
+function updateRangeRowVisibility() {
+  // hide range row if only prime is active
+  var onlyPrime = activeTypes.prime && !activeTypes.mult && !activeTypes.div;
+  document.getElementById('rangeRow').style.display = onlyPrime ? 'none' : '';
+}
+
+// ═══════════════════════
+//  GAME LOGIC
+// ═══════════════════════
+function pickNext() {
+  var i, pick, due = [];
+  for (i=0;i<reviewQueue.length;i++)
+    if (reviewQueue[i].showAtTurn<=turn) due.push(reviewQueue[i]);
+  if (due.length>0) {
+    pick = due[Math.floor(Math.random()*due.length)];
+    reviewQueue = reviewQueue.filter(function(r){return r!==pick;});
+    return pick.card;
+  }
+  if (available.length>0) {
+    var idx=Math.floor(Math.random()*available.length), c=available[idx];
+    available.splice(idx,1); return c;
+  }
+  if (reviewQueue.length>0) {
+    reviewQueue.sort(function(a,b){return a.showAtTurn-b.showAtTurn;});
+    pick=reviewQueue[0]; reviewQueue=reviewQueue.slice(1); return pick.card;
+  }
+  return null;
+}
+
+function showCard() {
+  current = pickNext();
+  if (!current) {
+    document.getElementById('gameScreen').style.display = 'none';
+    document.getElementById('doneScreen').style.display = 'block';
+    return;
+  }
+  revealed = false;
+  var isMD = current.type==='mult'||current.type==='div';
+  document.getElementById('layoutMD').style.display    = isMD?'':'none';
+  document.getElementById('layoutPrime').style.display = isMD?'none':'';
+
+  if (isMD) {
+    document.getElementById('cardLabel').textContent =
+      current.type==='mult'
+        ? 'Table de '+current.table+' — multiplication'
+        : 'Table de '+current.table+' — division';
+    document.getElementById('qa').textContent  = current.a;
+    document.getElementById('qop').textContent = current.type==='mult'?'×':'÷';
+    document.getElementById('qb').textContent  = current.b;
+    var slot = document.getElementById('qans');
+    slot.textContent='?'; slot.classList.remove('revealed');
+  } else {
+    document.getElementById('cardLabel').textContent = 'Facteurs premiers';
+    var pn = document.getElementById('primeNum');
+    pn.textContent = current.num;
+    pn.style.fontSize = '';
+  }
+
+  document.getElementById('revealBtn').disabled = false;
+  document.getElementById('revealButtons').classList.remove('hidden');
+  document.getElementById('actionButtons').classList.add('hidden');
+  updateStats(); updateProgress();
+}
+
+function doReveal() {
+  if (!current||revealed) return;
+  revealed=true; turn++;
+
+  if (current.type==='mult'||current.type==='div') {
+    var slot=document.getElementById('qans');
+    slot.textContent=current.answer; slot.classList.add('revealed');
+    var hint = current.type==='mult'
+      ? current.a+' × '+current.b+' = '+current.answer+'   →   '+current.answer+' ÷ '+current.b+' = '+current.a
+      : current.b+' × '+current.answer+' = '+current.a+'   →   '+current.a+' ÷ '+current.b+' = '+current.answer;
+    document.getElementById('cardLabel').textContent = hint;
+  } else {
+    var pn = document.getElementById('primeNum');
+    var full = current.num + ' = ' + current.answerStr;
+    pn.textContent = full;
+    pn.style.fontSize = full.length>16?'1.5rem':full.length>12?'1.9rem':'2.5rem';
+    document.getElementById('cardLabel').textContent = current.factors.join(' × ');
+  }
+
+  document.getElementById('revealButtons').classList.add('hidden');
+  document.getElementById('actionButtons').classList.remove('hidden');
+}
+
+function doKnown()    { if (!current) return; known.push(current); showCard(); }
+function doReview(n)  { if (!current) return; reviewQueue.push({card:current,showAtTurn:turn+n}); showCard(); }
+
+function updateStats() {
+  document.getElementById('stats').innerHTML =
+    '✓\u00A0Connues\u00A0: <strong>'+known.length+'</strong> · ' +
+    '↺\u00A0À revoir\u00A0: <strong>'+reviewQueue.length+'</strong> · ' +
+    'Restantes\u00A0: <strong>'+available.length+'</strong> · ' +
+    'Tour\u00A0: <strong>'+turn+'</strong>';
+}
+
+function updateProgress() {
+  var t=allCards.length, pct=t>0?(known.length/t)*100:0;
+  document.getElementById('progressFill').style.width=pct+'%';
+}
+
+function doRestart() {
+  allCards=buildCards(); available=allCards.slice();
+  reviewQueue=[]; known=[]; turn=0;
+  document.getElementById('gameScreen').style.display='block';
+  document.getElementById('doneScreen').style.display='none';
+  showCard();
+}
+
+// ═══════════════════════
+//  TAP HANDLERS
+// ═══════════════════════
+function tapHandler(id,fn) {
+  var el=document.getElementById(id); if(!el) return;
+  var t=false;
+  el.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();t=true;fn();},{passive:false});
+  el.addEventListener('touchend',  function(e){e.preventDefault();e.stopPropagation();},{passive:false});
+  el.addEventListener('touchmove', function(e){e.preventDefault();},{passive:false});
+  el.addEventListener('click',     function(e){e.preventDefault();e.stopPropagation();if(!t)fn();t=false;});
+}
+tapHandler('revealBtn',   doReveal);
+tapHandler('knownBtn',    doKnown);
+tapHandler('reviewBtn3',  function(){ doReview(3);  });
+tapHandler('reviewBtn5',  function(){ doReview(5);  });
+tapHandler('reviewBtn20', function(){ doReview(20); });
+tapHandler('restartBtn',  doRestart);
+document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
+
+// ═══════════════════════
+//  INIT
+// ═══════════════════════
+doRestart();
+</script>
+</body>
+</html>
