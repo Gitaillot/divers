@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calcul mental : choisir sa stratégie (v002)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,500;9..144,650&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F7F9FC; --surface:#FFFFFF; --ink:#1B2F7A; --on-ink:#FFFFFF; --text:#22283A; --muted:#5B6475;
+  --grid:#DCE6F4; --grid-strong:#AFC5E6; --margin:#D6334B; --line:#DCE3EE;
+  --ok:#1F7A4D; --ok-bg:#E4F4EB; --mid:#8A5D00; --mid-bg:#FBF1D9; --bad:#B4233A; --bad-bg:#FBE5E9;
+  --focus:#2F6BFF;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10162A; --surface:#182037; --ink:#AFC3FF; --on-ink:#10162A; --text:#E6EAF3; --muted:#9BA5BA;
+    --grid:#212C47; --grid-strong:#33456F; --margin:#EC6B7F; --line:#2A3553;
+    --ok:#62D69D; --ok-bg:#163428; --mid:#EAC66E; --mid-bg:#3A3019; --bad:#FF8C9D; --bad-bg:#3F1C26;
+    --focus:#7FA4FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10162A; --surface:#182037; --ink:#AFC3FF; --on-ink:#10162A; --text:#E6EAF3; --muted:#9BA5BA;
+  --grid:#212C47; --grid-strong:#33456F; --margin:#EC6B7F; --line:#2A3553;
+  --ok:#62D69D; --ok-bg:#163428; --mid:#EAC66E; --mid-bg:#3A3019; --bad:#FF8C9D; --bad-bg:#3F1C26;
+  --focus:#7FA4FF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--text);
+  font-family:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;font-size:17px;line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.top{max-width:760px;margin:0 auto;padding:14px 18px 0;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.brand{background:none;border:0;padding:0;font-family:"Fraunces",Georgia,serif;font-weight:650;font-size:20px;color:var(--ink);cursor:pointer}
+.top nav{display:flex;gap:4px;flex-wrap:wrap}
+.top nav button{background:none;border:0;border-bottom:2px solid transparent;padding:6px 10px;cursor:pointer;color:var(--muted)}
+.top nav button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--margin);font-weight:700}
+
+.wrap{max-width:760px;margin:0 auto;padding:18px 18px 56px}
+h1{font-family:"Fraunces",Georgia,serif;font-weight:650;font-size:clamp(26px,5vw,34px);line-height:1.2;margin:18px 0 12px;color:var(--text)}
+h2{font-size:19px;margin:32px 0 10px}
+h3{font-size:17px;margin:0 0 4px}
+p{margin:0 0 12px;max-width:68ch}
+.muted{color:var(--muted)}
+
+/* Le cahier Seyès : l'élément central */
+.board{position:relative;background-color:var(--surface);
+  background-image:
+    linear-gradient(to right,transparent 46px,var(--margin) 46px,var(--margin) 48px,transparent 48px),
+    repeating-linear-gradient(to bottom,var(--grid-strong) 0 1px,transparent 1px 32px),
+    repeating-linear-gradient(to bottom,var(--grid) 0 1px,transparent 1px 8px),
+    repeating-linear-gradient(to right,var(--grid) 0 1px,transparent 1px 32px);
+  border:1px solid var(--line);border-radius:4px;padding:30px 18px 30px 70px;overflow-x:auto}
+.problem{font-family:"Fraunces",Georgia,serif;font-weight:650;color:var(--ink);
+  font-size:clamp(40px,11vw,80px);line-height:1.15;font-variant-numeric:lining-nums tabular-nums;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:0 .3em;white-space:nowrap}
+.problem input{font-family:inherit;font-weight:inherit;font-size:inherit;color:var(--ink);
+  width:4.2em;max-width:100%;background:transparent;border:0;border-bottom:3px solid var(--ink);border-radius:0;padding:0 .05em}
+.problem input:focus-visible{outline:none;border-bottom-color:var(--focus)}
+.hint{margin:10px 0 0;color:var(--muted)}
+
+.btn{border:1px solid var(--ink);background:var(--surface);color:var(--ink);padding:10px 18px;border-radius:6px;cursor:pointer;font-weight:700}
+.btn.primary{background:var(--ink);color:var(--on-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:4px}
+
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:22px}
+.mode.facts{border-left-color:var(--margin)}
+.seg{display:flex;height:10px;border-radius:3px;overflow:hidden;background:var(--line);min-width:120px}
+.seg i{display:block;height:100%}
+.b0{background:var(--line)} .b1{background:var(--bad)} .b2{background:var(--mid)} .b3{background:#7FA4D9} .b4{background:var(--ink)} .b5{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted);margin:10px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px}
+.status{font-size:18px;margin:14px 0}
+.mode{text-align:left;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:4px;padding:16px;cursor:pointer}
+.mode strong{display:block;font-size:18px;color:var(--ink);margin-bottom:4px}
+.mode span{color:var(--muted);font-size:15px}
+.mode:hover{border-color:var(--ink)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:15px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.group{margin-bottom:14px}
+.group h3{font-size:15px;color:var(--muted);font-weight:700;margin-bottom:6px}
+.settings{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:8px}
+.settings label{display:flex;gap:8px;align-items:center}
+select{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+.warn{color:var(--bad);font-weight:700}
+
+.qhead{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:6px 0 12px;color:var(--muted);font-size:15px;flex-wrap:wrap}
+.qhead strong{color:var(--text)}
+.timer{height:5px;background:var(--line);border-radius:3px;margin:10px 0 16px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--margin)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;align-items:start}
+.opt .k{grid-row:span 2;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:4px;min-width:1.8em;text-align:center;line-height:1.6}
+.opt .n{font-weight:700}
+.opt .s{color:var(--muted);font-size:14px}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt:disabled{cursor:default}
+.opt.right{border:2px solid var(--ok);background:var(--ok-bg)}
+.opt.alt{border:2px solid var(--mid);background:var(--mid-bg)}
+.opt.wrong{border:2px solid var(--bad);background:var(--bad-bg)}
+.actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.fb{margin-top:18px;border-left:4px solid;border-radius:4px;padding:14px 16px}
+.fb.ok{border-color:var(--ok);background:var(--ok-bg)}
+.fb.mid{border-color:var(--mid);background:var(--mid-bg)}
+.fb.bad{border-color:var(--bad);background:var(--bad-bg)}
+.verdict{font-weight:700;font-size:18px;margin-bottom:6px}
+.fb.ok .verdict{color:var(--ok)} .fb.mid .verdict{color:var(--mid)} .fb.bad .verdict{color:var(--bad)}
+.time{font-weight:400;color:var(--muted);font-size:15px;margin-left:6px}
+.steps{list-style:none;margin:8px 0 12px;padding:0;font-family:"Fraunces",Georgia,serif;font-size:19px;color:var(--ink);font-variant-numeric:lining-nums tabular-nums}
+.steps li{padding:2px 0}
+.lvl{font-size:15px;margin-bottom:10px}
+
+.lesson{border-top:1px solid var(--line);padding:18px 0}
+.mini{background-color:var(--surface);
+  background-image:linear-gradient(to right,transparent 22px,var(--margin) 22px,var(--margin) 23px,transparent 23px),
+    repeating-linear-gradient(to bottom,var(--grid) 0 1px,transparent 1px 8px);
+  border:1px solid var(--line);border-radius:4px;padding:10px 14px 10px 36px;margin:8px 0 10px;overflow-x:auto}
+.mini .ex{font-family:"Fraunces",Georgia,serif;font-weight:650;font-size:24px;color:var(--ink)}
+.mini .steps{margin:4px 0 0;font-size:17px}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{color:var(--muted);font-weight:700}
+td.num,th.num{text-align:right}
+tr:last-child td{border-bottom:0}
+.op-row td{background:var(--paper);font-weight:700;color:var(--muted)}
+
+.score{font-family:"Fraunces",Georgia,serif;font-weight:650;font-size:56px;color:var(--ink);line-height:1}
+.missed{list-style:none;padding:0;margin:8px 0}
+.missed li{padding:8px 0;border-bottom:1px solid var(--line)}
+.missed b{font-family:"Fraunces",Georgia,serif;color:var(--ink);margin-right:8px}
+
+@media (max-width:520px){
+  .modes,.opts{grid-template-columns:1fr}
+  .board{padding-left:62px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="brand" data-go="home">Calcul mental</button>
+  <nav aria-label="Navigation principale">
+    <button data-go="home">Entraînement</button>
+    <button data-go="facts">Faits</button>
+    <button data-go="lessons">Leçons</button>
+    <button data-go="stats">Progrès</button>
+  </nav>
+</header>
+<main id="app" class="wrap"></main>
+
+<script>
+/*STRATS-START*/
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const fmt=n=>n.toLocaleString('fr-FR');
+function withUnits(min,max,units){
+  for(let i=0;i<500;i++){const n=rnd(min,max);if(units.includes(n%10))return n;}
+  return min;
+}
+const U17=[1,2,3,4,5,6,7], U37=[3,4,5,6,7], NZ=[1,2,3,4,5,6,7,8,9], UMUL=[2,3,4,6,7];
+
+const STRATS=[
+{id:'arrondir',op:'add',name:'Arrondir et compenser (+)',short:'+ nombre rond, puis corriger',
+ rule:"Quand un nombre est proche d'une dizaine ou d'une centaine ronde, ajoute le nombre rond, puis corrige l'écart.",
+ alt:['add_decomp'],
+ gen(L){let a,R;const d=rnd(1,L===1?2:3);
+  if(L===1){R=10*rnd(2,9);a=withUnits(21,89,U17);}
+  else if(L===2){if(Math.random()<.5){R=10*rnd(3,9);a=withUnits(120,480,U17);}else{R=100*rnd(1,4);a=withUnits(25,95,U17);}}
+  else{R=100*rnd(2,9);a=withUnits(120,890,U17);}
+  const b=R-d,sw=Math.random()<.5;
+  return{a,b,R,d,text:sw?`${fmt(b)} + ${fmt(a)}`:`${fmt(a)} + ${fmt(b)}`,answer:a+b};},
+ steps:p=>[`${fmt(p.b)} = ${fmt(p.R)} − ${p.d}`,`${fmt(p.a)} + ${fmt(p.R)} = ${fmt(p.a+p.R)}`,`${fmt(p.a+p.R)} − ${p.d} = ${fmt(p.answer)}`],
+ example:{a:47,b:98,R:100,d:2,text:'47 + 98',answer:145}},
+
+{id:'add_decomp',op:'add',name:"Décomposer l'addition",short:'dizaines, puis unités',
+ rule:"Ajoute d'abord les dizaines (ou les centaines) du second nombre, puis ses unités.",
+ alt:[],
+ gen(L){let a,b;
+  if(L===1){a=withUnits(23,79,U17);b=10*rnd(2,6)+rnd(3,7);}
+  else if(L===2){a=withUnits(120,880,U17);b=10*rnd(2,8)+rnd(3,7);}
+  else{a=withUnits(120,680,U17);b=100*rnd(1,3)+10*rnd(1,8)+rnd(3,7);}
+  return{a,b,text:`${fmt(a)} + ${fmt(b)}`,answer:a+b};},
+ steps(p){const u=p.b%10,big=p.b-u;return[`${fmt(p.b)} = ${fmt(big)} + ${u}`,`${fmt(p.a)} + ${fmt(big)} = ${fmt(p.a+big)}`,`${fmt(p.a+big)} + ${u} = ${fmt(p.answer)}`];},
+ example:{a:47,b:36,text:'47 + 36',answer:83}},
+
+{id:'associer',op:'add',name:'Regrouper les termes',short:"d'abord ceux qui font un nombre rond",
+ rule:"Avec trois nombres ou plus, additionne d'abord ceux qui forment ensemble une dizaine ou une centaine ronde.",
+ alt:['add_decomp'],
+ gen(L){for(;;){let x,y,z;
+  if(L===1){x=withUnits(11,59,NZ);z=(10-x%10)+10*rnd(1,3);y=withUnits(21,69,U37);}
+  else if(L===2){x=withUnits(11,89,NZ);z=100-x;y=withUnits(21,79,U37);}
+  else{x=withUnits(110,480,NZ);z=(100-x%100)+100*rnd(1,3);y=withUnits(120,480,U37);}
+  if((x+y)%10===0||(y+z)%10===0)continue;
+  return{x,y,z,text:`${fmt(x)} + ${fmt(y)} + ${fmt(z)}`,answer:x+y+z};}},
+ steps(p){const s=p.x+p.z;return[`${fmt(p.x)} + ${fmt(p.z)} = ${fmt(s)}`,`${fmt(s)} + ${fmt(p.y)} = ${fmt(p.answer)}`];},
+ example:{x:17,y:46,z:33,text:'17 + 46 + 33',answer:96}},
+
+{id:'comp_sous',op:'sub',name:'Arrondir et compenser (−)',short:'− nombre rond, puis rajouter',
+ rule:"Pour soustraire un nombre proche d'un nombre rond, soustrais le nombre rond, puis rajoute ce que tu as retiré de trop.",
+ alt:['sous_decomp','complement'],
+ gen(L){let a,R,d;
+  if(L===1){R=10*rnd(2,6);d=rnd(1,2);a=withUnits(R+20,99,U17);}
+  else if(L===2){if(Math.random()<.5){R=10*rnd(3,9);d=rnd(1,2);a=withUnits(R+60,R+400,U17);}else{R=100*rnd(1,3);d=rnd(1,3);a=withUnits(R+40,R+500,U17);}}
+  else{R=100*rnd(2,6);d=rnd(1,3);a=withUnits(R+150,R+1200,U17);}
+  const b=R-d;return{a,b,R,d,text:`${fmt(a)} − ${fmt(b)}`,answer:a-b};},
+ steps:p=>[`${fmt(p.b)} = ${fmt(p.R)} − ${p.d}`,`${fmt(p.a)} − ${fmt(p.R)} = ${fmt(p.a-p.R)}`,`On a retiré ${p.d} de trop : ${fmt(p.a-p.R)} + ${p.d} = ${fmt(p.answer)}`],
+ example:{a:143,b:98,R:100,d:2,text:'143 − 98',answer:45}},
+
+{id:'complement',op:'sub',name:"Compter l'écart",short:'avancer du petit au grand',
+ rule:"Quand les deux nombres sont proches, compte l'écart en avançant du plus petit au plus grand, en t'arrêtant au nombre rond situé entre les deux.",
+ alt:['comp_sous'],
+ gen(L){let base,p,q;
+  if(L===1){base=10*rnd(3,9);p=rnd(1,5);q=rnd(1,5);}
+  else if(L===2){base=100*rnd(1,9);p=rnd(1,9);q=rnd(1,9);}
+  else{base=1000*rnd(1,9);p=rnd(2,15);q=rnd(2,25);}
+  const a=base+q,b=base-p;return{a,b,base,p,q,text:`${fmt(a)} − ${fmt(b)}`,answer:p+q};},
+ steps:p=>[`De ${fmt(p.b)} à ${fmt(p.base)} : ${p.p}`,`De ${fmt(p.base)} à ${fmt(p.a)} : ${p.q}`,`${p.p} + ${p.q} = ${fmt(p.answer)}`],
+ example:{a:62,b:57,base:60,p:3,q:2,text:'62 − 57',answer:5}},
+
+{id:'sous_decomp',op:'sub',name:'Décomposer la soustraction',short:'dizaines, puis unités',
+ rule:"Soustrais d'abord les dizaines (ou les centaines) du second nombre, puis ses unités.",
+ alt:[],
+ gen(L){const ub=rnd(2,6),u=rnd(ub,9);let a,b;
+  if(L===1){const tb=rnd(1,4);b=10*tb+ub;a=10*rnd(tb+2,9)+u;}
+  else if(L===2){a=100*rnd(1,8)+10*rnd(1,9)+u;b=10*rnd(1,8)+ub;}
+  else{a=100*rnd(4,9)+10*rnd(0,9)+u;b=100*rnd(1,3)+10*rnd(1,9)+ub;}
+  return{a,b,text:`${fmt(a)} − ${fmt(b)}`,answer:a-b};},
+ steps(p){const u=p.b%10,big=p.b-u;return[`${fmt(p.b)} = ${fmt(big)} + ${u}`,`${fmt(p.a)} − ${fmt(big)} = ${fmt(p.a-big)}`,`${fmt(p.a-big)} − ${u} = ${fmt(p.answer)}`];},
+ example:{a:85,b:32,text:'85 − 32',answer:53}},
+
+{id:'decomposer',op:'mul',name:'Décomposer la multiplication',short:'(dizaines + unités) × b',
+ rule:"Sépare le grand nombre en dizaines (ou centaines) et unités, multiplie chaque partie, puis additionne les résultats.",
+ alt:[],
+ gen(L){const b=pick([3,4,6,7,8]);let a;
+  if(L===1)a=10*rnd(1,4)+pick(UMUL);
+  else if(L===2)a=10*rnd(5,9)+pick(UMUL);
+  else a=100*rnd(1,3)+10*rnd(1,9)+pick(UMUL);
+  const sw=Math.random()<.3;return{a,b,text:sw?`${b} × ${fmt(a)}`:`${fmt(a)} × ${b}`,answer:a*b};},
+ steps(p){const u=p.a%10,big=p.a-u;return[`${fmt(p.a)} = ${fmt(big)} + ${u}`,`${fmt(big)} × ${p.b} = ${fmt(big*p.b)}`,`${u} × ${p.b} = ${u*p.b}`,`${fmt(big*p.b)} + ${u*p.b} = ${fmt(p.answer)}`];},
+ example:{a:47,b:6,text:'47 × 6',answer:282}},
+
+{id:'fois5',op:'mul',name:'× 5 = × 10 ÷ 2',short:'× 10 (ou × 100), puis ÷ 2',
+ rule:"Multiplier par 5, c'est multiplier par 10 puis diviser par 2. Pour × 50 : × 100 puis ÷ 2.",
+ alt:['decomposer','doubles'],
+ gen(L){let a,m=5;
+  if(L===1)a=withUnits(12,98,NZ);
+  else if(L===2)a=withUnits(102,998,NZ);
+  else{a=withUnits(12,98,NZ);m=50;}
+  const sw=Math.random()<.4;return{a,m,text:sw?`${m} × ${fmt(a)}`:`${fmt(a)} × ${m}`,answer:a*m};},
+ steps(p){const f=p.m===5?10:100;return[`${fmt(p.a)} × ${f} = ${fmt(p.a*f)}`,`${fmt(p.a*f)} ÷ 2 = ${fmt(p.answer)}`];},
+ example:{a:68,m:5,text:'68 × 5',answer:340}},
+
+{id:'fois9',op:'mul',name:'× 9 = × 10 − 1 fois',short:'× 10 (ou × 100), puis − le nombre',
+ rule:"Multiplier par 9, c'est multiplier par 10 puis retirer le nombre une fois. Pour × 99 : × 100 puis retirer le nombre.",
+ alt:['decomposer'],
+ gen(L){let a,m=9;
+  if(L===1)a=withUnits(12,49,NZ);
+  else if(L===2)a=withUnits(51,99,NZ);
+  else{a=withUnits(12,99,NZ);m=99;}
+  const sw=Math.random()<.4;return{a,m,text:sw?`${m} × ${fmt(a)}`:`${fmt(a)} × ${m}`,answer:a*m};},
+ steps(p){const f=p.m+1;return[`${fmt(p.a)} × ${f} = ${fmt(p.a*f)}`,`${fmt(p.a*f)} − ${fmt(p.a)} = ${fmt(p.answer)}`];},
+ example:{a:47,m:9,text:'47 × 9',answer:423}},
+
+{id:'fois11',op:'mul',name:'× 11 = × 10 + 1 fois',short:'× 10, puis + le nombre',
+ rule:"Multiplier par 11, c'est multiplier par 10 puis ajouter le nombre. Pour un nombre à deux chiffres : écarte les chiffres et place leur somme au milieu, avec une retenue si cette somme dépasse 9.",
+ alt:['decomposer'],
+ gen(L){let a;
+  if(L===1){const d1=rnd(1,8),d2=rnd(1,9-d1);a=10*d1+d2;}
+  else if(L===2){const d1=rnd(2,9),d2=rnd(10-d1,9);a=10*d1+d2;}
+  else a=withUnits(102,298,NZ);
+  const sw=Math.random()<.4;return{a,text:sw?`11 × ${fmt(a)}`:`${fmt(a)} × 11`,answer:a*11};},
+ steps(p){const l=[`${fmt(p.a)} × 10 = ${fmt(p.a*10)}`,`${fmt(p.a*10)} + ${fmt(p.a)} = ${fmt(p.answer)}`];
+  if(p.a<100){const d1=Math.floor(p.a/10),d2=p.a%10,s=d1+d2;
+   l.push(`Astuce : ${d1} … ${d2}, au milieu ${d1} + ${d2} = ${s}${s>9?' (retenue de 1 à gauche)':''} → ${fmt(p.answer)}`);}
+  return l;},
+ example:{a:63,text:'63 × 11',answer:693}},
+
+{id:'doubles',op:'mul',name:'Doubler et diviser par 2',short:'le produit ne change pas',
+ rule:"Double l'un des facteurs et divise l'autre par 2 : le produit reste le même. Très efficace avec 15, 25, 35, 45, 75, 125…",
+ alt:['decomposer','fois5'],
+ gen(L){for(;;){let a,b;
+  if(L===1){a=pick([15,25]);b=2*rnd(2,9);}
+  else if(L===2){a=pick([15,25,35,45]);b=2*rnd(6,24);}
+  else{a=pick([25,75,125]);b=4*rnd(3,12);}
+  if(b%10===0)continue;
+  const sw=Math.random()<.4;return{a,b,text:sw?`${b} × ${fmt(a)}`:`${fmt(a)} × ${b}`,answer:a*b};}},
+ steps(p){let a=p.a*2,b=p.b/2;const l=[`${fmt(p.a)} × ${p.b} = ${fmt(a)} × ${b}`];
+  while(b%2===0&&a%100!==0&&(a*2)%100===0){const na=a*2,nb=b/2;l.push(`${fmt(a)} × ${b} = ${fmt(na)} × ${nb}`);a=na;b=nb;}
+  l.push(`${fmt(a)} × ${b} = ${fmt(p.answer)}`);return l;},
+ example:{a:25,b:16,text:'25 × 16',answer:400}},
+
+{id:'carre',op:'mul',name:'Différence de carrés',short:'(n − k)(n + k) = n² − k²',
+ rule:"Quand les deux facteurs sont à la même distance k d'un même nombre n : (n − k) × (n + k) = n² − k². C'est immédiat si n est rond, et aussi si tu connais son carré (15² = 225, 25² = 625).",
+ alt:['decomposer'],
+ gen(L){let n,k;
+  if(L===1){n=10*rnd(2,9);k=rnd(1,2);}
+  else if(L===2){n=10*rnd(2,9);k=rnd(3,6);}
+  else if(Math.random()<.5){n=10*rnd(11,20);k=rnd(1,6);}
+  else{n=pick([15,25,35,45]);k=rnd(1,4);}
+  let a=n-k,b=n+k;if(Math.random()<.5)[a,b]=[b,a];
+  return{a,b,n,k,text:`${fmt(a)} × ${fmt(b)}`,answer:(n-k)*(n+k)};},
+ steps:p=>[`${fmt(p.n-p.k)} × ${fmt(p.n+p.k)} = (${p.n} − ${p.k}) × (${p.n} + ${p.k})`,`= ${p.n}² − ${p.k}² = ${fmt(p.n*p.n)} − ${p.k*p.k}`,`= ${fmt(p.answer)}`],
+ example:{a:49,b:51,n:50,k:1,text:'49 × 51',answer:2499}}
+];
+/*STRATS-END*/
+
+/*FACTS-START*/
+const FAMS=[
+ {id:'comp',name:'Compléments à 10 et à 100'},
+ {id:'tables',name:'Tables de multiplication'},
+ {id:'doubles',name:'Doubles et moitiés'},
+ {id:'m25',name:'Multiples de 25'},
+ {id:'carres',name:'Carrés de 11 à 25'},
+ {id:'fractions',name:'Fractions, décimaux, pourcentages'}];
+const fmtN=x=>x.toLocaleString('fr-FR',{maximumFractionDigits:4});
+function buildFacts(){
+  const F=[];
+  for(let a=1;a<=9;a++)F.push({id:`comp:10-${a}`,fam:'comp',pre:`${a} +`,post:'= 10',ans:10-a});
+  for(let a=1;a<=99;a++)if(a%10)F.push({id:`comp:100-${a}`,fam:'comp',pre:`${a} +`,post:'= 100',ans:100-a});
+  for(let a=2;a<=10;a++)for(let b=a;b<=10;b++)F.push({id:`tables:${a}x${b}`,fam:'tables',pre:`${a} × ${b} =`,pre2:a===b?null:`${b} × ${a} =`,post:'',ans:a*b});
+  for(let n=11;n<=50;n++)if(n%10)F.push({id:`doubles:d${n}`,fam:'doubles',pre:`2 × ${n} =`,post:'',ans:2*n});
+  for(let n=12;n<=98;n+=2)if(n%20)F.push({id:`doubles:m${n}`,fam:'doubles',pre:`${n} ÷ 2 =`,post:'',ans:n/2});
+  for(let n=2;n<=40;n++)F.push({id:`m25:${n}`,fam:'m25',pre:`25 × ${n} =`,pre2:`${n} × 25 =`,post:'',ans:25*n});
+  for(let n=11;n<=25;n++)F.push({id:`carres:${n}`,fam:'carres',pre:`${n}² =`,post:'',ans:n*n});
+  [[1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,8],[3,8],[5,8],[7,8],[1,10],[3,10],[1,20],[1,25],[1,50]].forEach(([p,q])=>{
+    F.push({id:`fractions:${p}/${q}d`,fam:'fractions',pre:`${p}/${q} =`,post:'',ans:p/q,hint:'Réponds avec un nombre décimal (virgule ou point).'});
+    F.push({id:`fractions:${p}/${q}p`,fam:'fractions',pre:`${p}/${q} =`,post:'%',ans:100*p/q,hint:'Réponds en pourcentage.'});
+  });
+  return F;
+}
+const FACTS=buildFacts();
+const factById=Object.fromEntries(FACTS.map(f=>[f.id,f]));
+/*FACTS-END*/
+
+const byId=Object.fromEntries(STRATS.map(s=>[s.id,s]));
+const OPS={add:'Addition',sub:'Soustraction',mul:'Multiplication'};
+const KEY='calculMental', OLD_KEY='calculMental_v001';
+const app=document.getElementById('app');
+
+function blankStat(){return{level:1,streak:0,miss:0,choiceN:0,choiceOK:0,choiceT:0,calcN:0,calcOK:0,calcT:0};}
+function load(){
+  let s=null;
+  try{const raw=localStorage.getItem(KEY)||localStorage.getItem(OLD_KEY);if(raw)s=JSON.parse(raw);}catch(e){s=null;}
+  if(!s||typeof s!=='object')s={};
+  s.settings=Object.assign({enabled:STRATS.map(x=>x.id),choiceSec:8,roundLen:10,factFams:FAMS.map(x=>x.id),fastSec:3,factLen:20,newPer:8},s.settings||{});
+  s.settings.factFams=(Array.isArray(s.settings.factFams)?s.settings.factFams:[]).filter(id=>FAMS.some(f=>f.id===id));
+  s.facts=(s.facts&&typeof s.facts==='object')?s.facts:{};
+  s.settings.enabled=(Array.isArray(s.settings.enabled)?s.settings.enabled:[]).filter(id=>byId[id]);
+  s.stats=s.stats||{};
+  STRATS.forEach(x=>{s.stats[x.id]=Object.assign(blankStat(),s.stats[x.id]||{});});
+  return s;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+let state=load();
+let round=null, raf=null;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function weight(id){const st=state.stats[id],n=st.choiceN+st.calcN,ok=st.choiceOK+st.calcOK;
+  const rate=n?ok/n:.5;return 1+3*(1-rate)+(n<3?1.5:0);}
+function pickStrategy(pool,last){
+  let c=pool.length>1?pool.filter(id=>id!==last):pool.slice();
+  const ws=c.map(weight),tot=ws.reduce((a,b)=>a+b,0);let r=Math.random()*tot;
+  for(let i=0;i<c.length;i++){r-=ws[i];if(r<=0)return c[i];}
+  return c[c.length-1];
+}
+function setNav(view){document.querySelectorAll('.top nav button').forEach(b=>{
+  if(b.dataset.go===view)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});}
+function stopTimer(){if(raf){cancelAnimationFrame(raf);raf=null;}}
+
+/* ---------- Accueil ---------- */
+function renderHome(){
+  clearAuto();
+  stopTimer();round=null;setNav('home');
+  const en=state.settings.enabled;
+  const groups=Object.keys(OPS).map(op=>`
+    <div class="group"><h3>${OPS[op]}</h3><div class="chips">
+      ${STRATS.filter(s=>s.op===op).map(s=>`<button class="chip" data-action="toggle" data-id="${s.id}" aria-pressed="${en.includes(s.id)}">${s.name}</button>`).join('')}
+    </div></div>`).join('');
+  app.innerHTML=`
+    <h1>Repère la bonne stratégie, puis calcule.</h1>
+    <div class="board"><div class="problem">49 × 51</div>
+      <p class="hint">Ici, inutile de poser la multiplication : 50² − 1² = 2 500 − 1 = 2 499.</p></div>
+    <div class="modes">
+      <button class="mode" data-action="start" data-mode="choice" ${en.length?'':'disabled'}>
+        <strong>Quelle stratégie ?</strong>
+        <span>Un calcul s'affiche pendant ${state.settings.choiceSec} secondes : choisis la méthode la plus rapide, sans calculer.</span></button>
+      <button class="mode" data-action="start" data-mode="calc" ${en.length?'':'disabled'}>
+        <strong>Calcul complet</strong>
+        <span>Calcule de tête, puis compare avec la méthode la plus rapide.</span></button>
+      <button class="mode facts" data-go="facts">
+        <strong>Faits à connaître</strong>
+        <span>${factCounts().due} à revoir aujourd'hui, ${factCounts().fresh} jamais vus. Tables, carrés, compléments, fractions…</span></button>
+    </div>
+    <h2>Stratégies incluses</h2>
+    ${en.length?'':'<p class="warn">Sélectionne au moins une stratégie pour commencer.</p>'}
+    ${groups}
+    <div class="actions"><button class="link" data-action="all">Tout sélectionner</button><button class="link" data-action="none">Tout désélectionner</button></div>
+    <h2>Réglages</h2>
+    <div class="settings">
+      <label>Temps pour choisir
+        <select data-setting="choiceSec">${[5,8,12].map(v=>`<option value="${v}" ${state.settings.choiceSec==v?'selected':''}>${v} s</option>`).join('')}</select></label>
+      <label>Questions par série
+        <select data-setting="roundLen">${[10,20,30].map(v=>`<option value="${v}" ${state.settings.roundLen==v?'selected':''}>${v}</option>`).join('')}</select></label>
+    </div>`;
+}
+
+/* ---------- Série ---------- */
+function startRound(mode,only){
+  const pool=only?[only]:state.settings.enabled.slice();
+  if(!pool.length)return;
+  round={mode,only:only||null,pool,len:state.settings.roundLen,i:0,items:[],cur:null,last:null};
+  setNav(null);nextQuestion();
+}
+function nextQuestion(){
+  stopTimer();
+  if(round.i>=round.len){renderSummary();return;}
+  const s=pickStrategy(round.pool,round.last);round.last=s;
+  const p=byId[s].gen(state.stats[s].level);p.s=s;
+  round.cur={p,start:performance.now(),answered:false,opts:null};
+  renderQuestion();
+}
+function renderQuestion(){
+  const {p}=round.cur,strat=byId[p.s],choice=round.mode==='choice';
+  let optsHtml='';
+  if(choice){
+    const same=STRATS.filter(x=>x.op===strat.op&&x.id!==strat.id).map(x=>x.id);
+    const opts=shuffle([strat.id,...shuffle(same).slice(0,3)]);
+    round.cur.opts=opts;
+    optsHtml=`<div class="timer" aria-hidden="true"><i id="bar"></i></div>
+      <div class="opts">${opts.map((id,i)=>`<button class="opt" data-action="choose" data-id="${id}">
+        <span class="k">${i+1}</span><span class="n">${byId[id].name}</span><span class="s">${byId[id].short}</span></button>`).join('')}</div>`;
+  }
+  app.innerHTML=`
+    <div class="qhead"><span><strong>${choice?'Quelle stratégie ?':'Calcul complet'}</strong>${round.only?' : '+strat.name:''}</span>
+      <span>Question ${round.i+1} / ${round.len}</span>
+      <button class="link" data-action="quit">Arrêter la série</button></div>
+    <div class="board"><div class="problem"><span>${p.text}</span>${choice?'':`<span>=</span><input id="ans" inputmode="numeric" autocomplete="off" enterkeyhint="done" aria-label="Ta réponse">`}</div></div>
+    ${choice?optsHtml:`<div class="actions"><button class="btn primary" data-action="submit">Valider</button><span id="msg" class="muted" role="status"></span></div>`}
+    <div id="fb"></div>`;
+  if(choice){
+    const limit=state.settings.choiceSec*1000,bar=document.getElementById('bar');
+    const tick=()=>{const el=performance.now()-round.cur.start,f=Math.max(0,1-el/limit);
+      bar.style.width=(f*100)+'%';
+      if(el>=limit){answerChoice(null);return;}
+      raf=requestAnimationFrame(tick);};
+    raf=requestAnimationFrame(tick);
+  }else{
+    const inp=document.getElementById('ans');inp.focus();
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();answerCalc();}});
+  }
+}
+function adjust(st,v){
+  if(v==='ok'){st.streak++;st.miss=0;if(st.streak>=4&&st.level<3){st.level++;st.streak=0;return'up';}}
+  else if(v==='bad'){st.streak=0;st.miss++;if(st.miss>=2&&st.level>1){st.level--;st.miss=0;return'down';}}
+  else st.streak=0;
+  return null;
+}
+function answerChoice(id){
+  const c=round.cur;if(!c||c.answered)return;c.answered=true;stopTimer();
+  const t=performance.now()-c.start,strat=byId[c.p.s],st=state.stats[c.p.s];
+  let v;if(id===strat.id)v='ok';else if(id&&strat.alt.includes(id))v='mid';else v='bad';
+  st.choiceN++;st.choiceT+=t;if(v==='ok')st.choiceOK++;
+  const lv=adjust(st,v);save();
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;
+    if(b.dataset.id===strat.id)b.classList.add('right');
+    else if(b.dataset.id===id)b.classList.add(v==='mid'?'alt':'wrong');});
+  const title=v==='ok'?'Bonne stratégie.':v==='mid'?'Valable, mais pas la plus rapide.':(id?'Pas la plus adaptée.':'Temps écoulé.');
+  finish(v,t,title,lv,true);
+}
+function answerCalc(){
+  const c=round.cur;if(!c||c.answered)return;
+  const inp=document.getElementById('ans'),raw=inp.value.replace(/[\s\u202f\u00a0.]/g,'');
+  if(!/^-?\d+$/.test(raw)){document.getElementById('msg').textContent='Entre un nombre entier.';inp.focus();return;}
+  c.answered=true;inp.readOnly=true;
+  const t=performance.now()-c.start,st=state.stats[c.p.s],v=parseInt(raw,10)===c.p.answer?'ok':'bad';
+  st.calcN++;st.calcT+=t;if(v==='ok')st.calcOK++;
+  const lv=adjust(st,v);save();
+  document.querySelector('[data-action="submit"]').disabled=true;
+  finish(v,t,v==='ok'?'Juste.':`Faux : la réponse est ${fmt(c.p.answer)}.`,lv,false);
+}
+function finish(v,t,title,lv,showAnswer){
+  const p=round.cur.p,strat=byId[p.s];
+  round.items.push({text:p.text,s:p.s,v,t});
+  const lvMsg=lv==='up'?`<p class="lvl">Niveau ${state.stats[p.s].level} atteint pour cette stratégie : les nombres seront plus grands.</p>`
+    :lv==='down'?`<p class="lvl">Retour au niveau ${state.stats[p.s].level} pour cette stratégie.</p>`:'';
+  const last=round.i+1>=round.len;
+  document.getElementById('fb').innerHTML=`
+    <div class="fb ${v}" role="status">
+      <p class="verdict">${title}<span class="time">${(t/1000).toFixed(1)} s</span></p>
+      <p>La plus rapide ici : <strong>${strat.name}</strong>${showAnswer?` · résultat : ${fmt(p.answer)}`:''}</p>
+      <ul class="steps">${strat.steps(p).map(x=>`<li>${x}</li>`).join('')}</ul>
+      ${lvMsg}
+      <button class="btn primary" data-action="next" id="nextBtn">${last?'Voir le bilan':'Question suivante'}</button>
+    </div>`;
+  document.getElementById('nextBtn').focus();
+}
+function renderSummary(){
+  stopTimer();
+  const it=round.items,ok=it.filter(x=>x.v==='ok').length,mid=it.filter(x=>x.v==='mid').length;
+  const avg=it.length?it.reduce((a,x)=>a+x.t,0)/it.length/1000:0;
+  const missed=it.filter(x=>x.v!=='ok');
+  app.innerHTML=`
+    <h1>Bilan de la série</h1>
+    <p class="score">${ok} / ${it.length}</p>
+    <p class="muted">${round.mode==='choice'?'stratégies les plus rapides trouvées':'calculs justes'}${mid?`, plus ${mid} choix valable${mid>1?'s':''} mais plus lent${mid>1?'s':''}`:''}. Temps moyen : ${avg.toFixed(1)} s.</p>
+    ${missed.length?`<h2>À revoir</h2><ul class="missed">${missed.map(x=>`<li><b>${x.text}</b>${byId[x.s].name}</li>`).join('')}</ul>`:'<p>Aucune erreur dans cette série.</p>'}
+    <div class="actions">
+      <button class="btn primary" data-action="again">Nouvelle série</button>
+      <button class="btn" data-go="home">Accueil</button>
+      <button class="btn" data-go="stats">Voir les progrès</button>
+    </div>`;
+}
+
+/* ---------- Leçons ---------- */
+function renderLessons(){
+  stopTimer();clearAuto();round=null;setNav('lessons');
+  app.innerHTML=`<h1>Leçons</h1>
+    <p class="muted">Chaque stratégie s'applique à des nombres d'une forme particulière. Repérer cette forme est la compétence que l'application entraîne.</p>
+    ${Object.keys(OPS).map(op=>`<h2>${OPS[op]}</h2>${STRATS.filter(s=>s.op===op).map(s=>`
+      <article class="lesson"><h3>${s.name}</h3><p>${s.rule}</p>
+        <div class="mini"><div class="ex">${s.example.text}</div><ul class="steps">${s.steps(s.example).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+        <button class="btn" data-action="train" data-id="${s.id}">S'entraîner sur cette stratégie</button></article>`).join('')}`).join('')}`;
+}
+
+/* ---------- Progrès ---------- */
+function pct(a,n){return n?Math.round(100*a/n)+' %':'—';}
+function renderStats(){
+  stopTimer();clearAuto();round=null;setNav('stats');
+  const rows=Object.keys(OPS).map(op=>`<tr class="op-row"><td colspan="5">${OPS[op]}</td></tr>`+
+    STRATS.filter(s=>s.op===op).map(s=>{const st=state.stats[s.id];
+      return`<tr><td>${s.name}</td><td class="num">${st.level} / 3</td>
+        <td class="num">${pct(st.choiceOK,st.choiceN)} <span class="muted">(${st.choiceN})</span></td>
+        <td class="num">${pct(st.calcOK,st.calcN)} <span class="muted">(${st.calcN})</span></td>
+        <td class="num">${st.calcN?(st.calcT/st.calcN/1000).toFixed(1)+' s':'—'}</td></tr>`;}).join('')).join('');
+  app.innerHTML=`<h1>Progrès</h1>
+    <p class="muted">Le niveau monte après 4 réussites de suite pour une stratégie et redescend après 2 erreurs de suite. Les stratégies les moins réussies reviennent plus souvent dans les séries.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Stratégie</th><th class="num">Niveau</th><th class="num">Choix réussis</th><th class="num">Calculs justes</th><th class="num">Temps moyen</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <h2>Faits à connaître</h2>
+    ${LEGEND}
+    <div class="tablewrap"><table>
+      <thead><tr><th>Famille</th><th class="num">Non vus</th><th class="num">B1</th><th class="num">B2</th><th class="num">B3</th><th class="num">B4</th><th class="num">B5</th><th>Répartition</th></tr></thead>
+      <tbody>${FAMS.map(f=>{const d=boxDist(f.id);return`<tr><td>${f.name}</td>${d.map(n=>`<td class="num">${n}</td>`).join('')}<td style="width:28%">${segBar(d)}</td></tr>`;}).join('')}</tbody></table></div>
+    <div class="actions"><button class="btn" data-action="reset" id="resetBtn">Réinitialiser tous les progrès</button></div>`;
+}
+let resetArmed=null;
+
+/* ---------- Faits à connaître (système de Leitner) ---------- */
+const DAY=864e5, INTERVAL={1:0,2:1,3:3,4:7,5:16}, KEEP5=30;
+let fsess=null, autoT=null;
+function clearAuto(){if(autoT){clearTimeout(autoT);autoT=null;}}
+function factPool(){const en=state.settings.factFams;return FACTS.filter(f=>en.includes(f.fam));}
+function factCounts(){const now=Date.now(),pool=factPool();let due=0,fresh=0;
+  pool.forEach(f=>{const r=state.facts[f.id];if(!r)fresh++;else if(r.due<=now)due++;});return{due,fresh,total:pool.length};}
+function boxDist(fam){const d=[0,0,0,0,0,0];FACTS.filter(f=>f.fam===fam).forEach(f=>{const r=state.facts[f.id];d[r?r.box:0]++;});return d;}
+function segBar(d){const t=d.reduce((a,b)=>a+b,0)||1;
+  return`<div class="seg" role="img" aria-label="Non vus ${d[0]}, boîtes 1 à 5 : ${d.slice(1).join(', ')}">${d.map((n,i)=>n?`<i class="b${i}" style="width:${100*n/t}%"></i>`:'').join('')}</div>`;}
+const LEGEND=`<div class="legend"><span><i class="b0"></i>Non vus</span><span><i class="b1"></i>Boîte 1</span><span><i class="b2"></i>Boîte 2</span><span><i class="b3"></i>Boîte 3</span><span><i class="b4"></i>Boîte 4</span><span><i class="b5"></i>Boîte 5 (acquis)</span></div>`;
+
+function renderFacts(){
+  stopTimer();clearAuto();round=null;fsess=null;setNav('facts');
+  const c=factCounts(),en=state.settings.factFams,S=state.settings;
+  const newNow=Math.min(c.fresh,S.newPer);
+  let statusTxt;
+  if(!en.length)statusTxt='<span class="warn">Sélectionne au moins une famille.</span>';
+  else{statusTxt=c.due?`<strong>${c.due}</strong> fait${c.due>1?'s':''} à revoir aujourd'hui`:"Aucune révision due aujourd'hui";
+    statusTxt+=newNow?`, plus ${newNow} nouveau${newNow>1?'x':''} dans la séance.`:'.';}
+  app.innerHTML=`<h1>Faits à connaître</h1>
+    <p class="muted">Des résultats à retrouver instantanément, sans calculer. Chaque fait avance d'une boîte quand tu réponds juste en moins de ${S.fastSec} secondes, et revient de plus en plus rarement : le jour même en boîte 1, puis après 1, 3, 7 et 16 jours. Une erreur le renvoie en boîte 1.</p>
+    <p class="status">${statusTxt}</p>
+    ${en.length&&!c.due&&!newNow?'<p class="muted">La séance proposera des révisions anticipées des faits les moins solides.</p>':''}
+    <div class="actions"><button class="btn primary" data-action="factStart" ${en.length?'':'disabled'}>Commencer la séance</button></div>
+    <h2>Familles</h2>
+    ${LEGEND}
+    <div class="tablewrap"><table style="min-width:420px"><tbody>
+      ${FAMS.map(f=>`<tr><td><button class="chip" data-action="famToggle" data-id="${f.id}" aria-pressed="${en.includes(f.id)}">${f.name}</button></td>
+        <td class="num muted">${FACTS.filter(x=>x.fam===f.id).length} faits</td><td style="width:40%">${segBar(boxDist(f.id))}</td></tr>`).join('')}
+    </tbody></table></div>
+    <h2>Réglages</h2>
+    <div class="settings">
+      <label>Seuil de rapidité
+        <select data-setting="fastSec" data-view="facts">${[2,3,5].map(v=>`<option value="${v}" ${S.fastSec==v?'selected':''}>${v} s</option>`).join('')}</select></label>
+      <label>Faits par séance
+        <select data-setting="factLen" data-view="facts">${[20,30,50].map(v=>`<option value="${v}" ${S.factLen==v?'selected':''}>${v}</option>`).join('')}</select></label>
+      <label>Nouveaux par séance
+        <select data-setting="newPer" data-view="facts">${[5,8,15].map(v=>`<option value="${v}" ${S.newPer==v?'selected':''}>${v}</option>`).join('')}</select></label>
+    </div>`;
+}
+function startFacts(){
+  const now=Date.now(),pool=factPool(),S=state.settings,len=S.factLen;
+  if(!pool.length)return;
+  const R=id=>state.facts[id];
+  const due=pool.filter(f=>R(f.id)&&R(f.id).due<=now).sort((x,y)=>R(x.id).box-R(y.id).box||R(x.id).due-R(y.id).due).slice(0,len);
+  const fresh=shuffle(pool.filter(f=>!R(f.id))).slice(0,Math.max(0,Math.min(S.newPer,len-due.length)));
+  let items=[...due,...fresh].map(f=>({id:f.id,early:false}));
+  if(items.length<len){
+    const extra=pool.filter(f=>R(f.id)&&R(f.id).due>now).sort((x,y)=>R(x.id).box-R(y.id).box||R(x.id).due-R(y.id).due)
+      .slice(0,len-items.length).map(f=>({id:f.id,early:true}));
+    items=items.concat(extra);
+  }
+  fsess={queue:shuffle(items),done:0,reps:{},log:[],up:0,cur:null};
+  setNav(null);nextFact();
+}
+function nextFact(){
+  clearAuto();stopTimer();
+  if(!fsess.queue.length){renderFactSummary();return;}
+  const it=fsess.queue.shift(),f=factById[it.id];
+  const pre=f.pre2&&Math.random()<.5?f.pre2:f.pre;
+  fsess.cur={it,f,pre,start:performance.now(),answered:false};
+  const dec=f.fam==='fractions';
+  app.innerHTML=`
+    <div class="qhead"><span><strong>Faits à connaître</strong></span>
+      <span>${fsess.done} répondu${fsess.done>1?'s':''}, ${fsess.queue.length+1} restant${fsess.queue.length?'s':''}</span>
+      <button class="link" data-action="factQuit">Arrêter la séance</button></div>
+    <div class="board"><div class="problem"><span>${pre}</span><input id="fans" inputmode="${dec?'decimal':'numeric'}" autocomplete="off" enterkeyhint="done" aria-label="Ta réponse">${f.post?`<span>${f.post}</span>`:''}</div>
+      ${f.hint?`<p class="hint">${f.hint}</p>`:''}</div>
+    <div class="timer" aria-hidden="true"><i id="bar"></i></div>
+    <div class="actions"><button class="btn primary" data-action="factSubmit">Valider</button><span id="msg" class="muted" role="status"></span></div>
+    <div id="fb"></div>`;
+  const inp=document.getElementById('fans');inp.focus();
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(fsess.cur.answered)nextFact();else answerFact();}});
+  const limit=state.settings.fastSec*1000,bar=document.getElementById('bar');
+  const tick=()=>{if(!fsess||!fsess.cur||fsess.cur.answered)return;const el=performance.now()-fsess.cur.start;
+    bar.style.width=(Math.max(0,1-el/limit)*100)+'%';if(el<limit)raf=requestAnimationFrame(tick);};
+  raf=requestAnimationFrame(tick);
+}
+function answerFact(){
+  const c=fsess.cur;if(!c||c.answered)return;
+  const inp=document.getElementById('fans'),raw=inp.value.replace(/[\s\u202f\u00a0]/g,'').replace(',','.');
+  if(!/^-?\d+(\.\d+)?$/.test(raw)&&!/^-?\.\d+$/.test(raw)){document.getElementById('msg').textContent='Entre un nombre.';inp.focus();return;}
+  c.answered=true;stopTimer();
+  const t=performance.now()-c.start,now=Date.now(),f=c.f,correct=Math.abs(parseFloat(raw)-f.ans)<1e-9;
+  const v=correct?(t<=state.settings.fastSec*1000?'ok':'mid'):'bad';
+  const r=state.facts[f.id]||{box:1,due:now,n:0,ok:0};r.n++;
+  let moved=null;
+  if(v==='ok'){r.ok++;
+    if(!c.it.early){if(r.box<5){r.box++;r.due=now+INTERVAL[r.box]*DAY-4*36e5;moved=r.box;fsess.up++;}else r.due=now+KEEP5*DAY-4*36e5;}}
+  else{
+    if(v==='bad')r.box=1;
+    r.due=now;
+    const n=fsess.reps[f.id]||0;
+    if(n<2){fsess.reps[f.id]=n+1;fsess.queue.splice(Math.min(3,fsess.queue.length),0,{id:f.id,early:false});}
+  }
+  state.facts[f.id]=r;save();
+  fsess.done++;fsess.log.push({f,pre:c.pre,v,t});
+  inp.readOnly=true;document.querySelector('[data-action="factSubmit"]').disabled=true;
+  const full=`${c.pre} ${fmtN(f.ans)}${f.post?' '+f.post:''}`;
+  const title=v==='ok'?'Juste.':v==='mid'?'Juste, mais trop lent : ce fait reviendra.':`Faux : ${full}`;
+  document.getElementById('fb').innerHTML=`<div class="fb ${v}" role="status">
+    <p class="verdict">${title}<span class="time">${(t/1000).toFixed(1)} s</span></p>
+    ${v==='ok'?(moved?`<p class="lvl">Passe en boîte ${moved}.</p>`:c.it.early?'<p class="lvl">Révision anticipée : la boîte ne change pas.</p>':''):v==='bad'?'<p class="lvl">Retour en boîte 1 ; il revient dans quelques questions.</p>':''}
+    <button class="btn primary" data-action="factNext" id="nextBtn">${fsess.queue.length?'Suivant':'Voir le bilan'}</button></div>`;
+  if(v==='ok'){autoT=setTimeout(()=>{autoT=null;if(fsess&&fsess.cur===c)nextFact();},700);}
+  else document.getElementById('nextBtn').focus();
+}
+function renderFactSummary(){
+  clearAuto();stopTimer();
+  const L=fsess.log,ok=L.filter(x=>x.v==='ok').length,slow=L.filter(x=>x.v==='mid').length,bad=L.filter(x=>x.v==='bad').length;
+  const seen=new Set(),hard=L.filter(x=>x.v!=='ok').filter(x=>seen.has(x.f.id)?false:seen.add(x.f.id));
+  app.innerHTML=`<h1>Bilan de la séance</h1>
+    <p class="score">${ok} / ${L.length}</p>
+    <p class="muted">réponses justes et rapides${slow?`, ${slow} juste${slow>1?'s':''} mais lente${slow>1?'s':''}`:''}${bad?`, ${bad} erreur${bad>1?'s':''}`:''}. ${fsess.up} fait${fsess.up>1?'s ont':' a'} changé de boîte.</p>
+    ${hard.length?`<h2>À consolider</h2><ul class="missed">${hard.map(x=>`<li><b>${x.pre} ${fmtN(x.f.ans)}${x.f.post?' '+x.f.post:''}</b></li>`).join('')}</ul>`:''}
+    <div class="actions"><button class="btn primary" data-go="facts">Retour aux faits</button><button class="btn" data-go="stats">Voir les progrès</button></div>`;
+}
+
+
+/* ---------- Événements ---------- */
+document.addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]');
+  if(go){const v=go.dataset.go;if(v==='home')renderHome();else if(v==='facts')renderFacts();else if(v==='lessons')renderLessons();else renderStats();window.scrollTo(0,0);return;}
+  const el=e.target.closest('[data-action]');if(!el)return;
+  const a=el.dataset.action;
+  if(a==='toggle'){const id=el.dataset.id,en=state.settings.enabled;
+    state.settings.enabled=en.includes(id)?en.filter(x=>x!==id):[...en,id];save();renderHome();}
+  else if(a==='all'){state.settings.enabled=STRATS.map(x=>x.id);save();renderHome();}
+  else if(a==='none'){state.settings.enabled=[];save();renderHome();}
+  else if(a==='start')startRound(el.dataset.mode);
+  else if(a==='train'){startRound('calc',el.dataset.id);window.scrollTo(0,0);}
+  else if(a==='choose')answerChoice(el.dataset.id);
+  else if(a==='submit')answerCalc();
+  else if(a==='next'){round.i++;nextQuestion();}
+  else if(a==='quit'){if(round&&round.items.length)renderSummary();else renderHome();}
+  else if(a==='again'){startRound(round.mode,round.only);}
+  else if(a==='famToggle'){const id=el.dataset.id,en=state.settings.factFams;
+    state.settings.factFams=en.includes(id)?en.filter(x=>x!==id):[...en,id];save();renderFacts();}
+  else if(a==='factStart'){startFacts();window.scrollTo(0,0);}
+  else if(a==='factSubmit')answerFact();
+  else if(a==='factNext')nextFact();
+  else if(a==='factQuit'){if(fsess&&fsess.log.length)renderFactSummary();else renderFacts();}
+  else if(a==='reset'){
+    if(resetArmed){clearTimeout(resetArmed);resetArmed=null;
+      STRATS.forEach(x=>{state.stats[x.id]=blankStat();});state.facts={};save();renderStats();}
+    else{el.textContent='Confirmer : tout effacer';resetArmed=setTimeout(()=>{resetArmed=null;const b=document.getElementById('resetBtn');if(b)b.textContent='Réinitialiser les progrès';},4000);}
+  }
+});
+document.addEventListener('change',e=>{
+  const s=e.target.dataset&&e.target.dataset.setting;
+  if(s){state.settings[s]=parseInt(e.target.value,10);save();if(e.target.dataset.view==='facts')renderFacts();else renderHome();}
+});
+document.addEventListener('keydown',e=>{
+  if(!round||!round.cur||round.cur.answered||round.mode!=='choice')return;
+  const k=parseInt(e.key,10);
+  if(k>=1&&k<=round.cur.opts.length){e.preventDefault();answerChoice(round.cur.opts[k-1]);}
+});
+
+renderHome();
+</script>
+</body>
+</html>
